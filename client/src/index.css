@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark text-slate-100 font-sans antialiased min-h-screen;
+    background-image: radial-gradient(circle at top left, rgba(14, 165, 233, 0.05) 0%, transparent 25%),
+                      radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 25%);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-br from-primary to-primary-dark text-white font-semibold py-3 px-6 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl transition-all hover:border-primary/30;
+  }
+  
+  .input-field {
+    @apply bg-slate-900/60 border border-slate-700 rounded-lg py-3 px-4 text-white w-full focus:outline-none focus:border-primary transition-colors;
+  }
+
+  .premium-heading {
+    @apply font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary tracking-tight;
+  }
+}
+
+.blob {
+  @apply absolute w-[500px] h-[500px] -z-10 rounded-full blur-[80px] opacity-20 pointer-events-none;
+}
