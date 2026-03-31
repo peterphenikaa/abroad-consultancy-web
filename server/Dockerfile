@@ -1,26 +1,23 @@
-# Dùng node nhẹ hơn để Render gói Free build nhanh
 FROM node:18-alpine
 
 WORKDIR /app
 
-# 1. Copy package.json TỪ THƯ MỤC server ngoài gốc vào container
+# 1. Copy package.json (Đứng từ thư mục root của Repo)
 COPY server/package*.json ./
 
-# 2. Cài đặt thư viện
 RUN npm install
 
-# 3. Copy Prisma config và schema (đường dẫn phải đúng từ gốc)
-COPY server/prisma.config.ts ./
+# 2. Copy thư mục prisma (Phải ghi rõ đường dẫn từ root repo)
 COPY server/prisma/ ./prisma/
+COPY server/prisma.config.ts ./
 
-# 4. Generate Prisma Client (Dùng DATABASE_URL giả để build không lỗi)
+# 3. Generate Prisma
 RUN DATABASE_URL="postgresql://placeholder:5432" npx prisma generate
 
-# 5. Copy TOÀN BỘ code của backend vào container
+# 4. Copy toàn bộ code server còn lại
 COPY server/ .
 
 EXPOSE 5000
 
-# 6. LÊN MÂY THÌ PHẢI CHẠY START, KHÔNG CHẠY DEV
-# (Đảm bảo trong package.json của server có script "start": "node index.js")
+# 5. Chạy lệnh start chuẩn
 CMD ["node", "index.js"]
