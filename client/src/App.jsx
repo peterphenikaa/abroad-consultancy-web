@@ -69,7 +69,7 @@ function App() {
 
       <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold premium-heading">NexStudy AI</h1>
+          <h1 className="text-3xl font-extrabold premium-heading">NexStudy AI PRO</h1>
           <div className="status">
             <span className={cn(
               "status-badge px-4 py-1.5 rounded-full text-sm font-medium",

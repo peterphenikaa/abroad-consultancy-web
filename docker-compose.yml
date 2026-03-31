@@ -3,7 +3,9 @@ version: '3.8'
 services:
   # Backend Service (Express + Prisma + BullMQ)
   server:
-    build: ./server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     container_name: study-abroad-server
     # Load trực tiếp tất cả biến từ file .env vào trong container
     env_file:
