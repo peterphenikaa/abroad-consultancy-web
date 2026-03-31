@@ -1,20 +1,26 @@
-FROM node:22
+# Dùng node nhẹ hơn để Render gói Free build nhanh
+FROM node:18-alpine
+
 WORKDIR /app
 
-# Caching dependencies
-COPY package*.json ./
+# 1. Copy package.json TỪ THƯ MỤC server ngoài gốc vào container
+COPY server/package*.json ./
+
+# 2. Cài đặt thư viện
 RUN npm install
 
-# Copy Prisma config and schema and generate
-COPY prisma.config.ts ./
-COPY prisma ./prisma/
+# 3. Copy Prisma config và schema (đường dẫn phải đúng từ gốc)
+COPY server/prisma.config.ts ./
+COPY server/prisma/ ./prisma/
+
+# 4. Generate Prisma Client (Dùng DATABASE_URL giả để build không lỗi)
 RUN DATABASE_URL="postgresql://placeholder:5432" npx prisma generate
 
-# No need to copy EVERYTHING here if we use volumes in Compose, 
-# but it's good practice for standalone builds
-COPY . .
+# 5. Copy TOÀN BỘ code của backend vào container
+COPY server/ .
 
-EXPOSE 5000 
+EXPOSE 5000
 
-# Default to development mode
-CMD ["npm", "run", "dev"]
+# 6. LÊN MÂY THÌ PHẢI CHẠY START, KHÔNG CHẠY DEV
+# (Đảm bảo trong package.json của server có script "start": "node index.js")
+CMD ["node", "index.js"]
