@@ -1,31 +1,19 @@
 version: '3.8'
 
 services:
-  # Database Service (Note: User is using Supabase, so this is just Redis for BullMQ)
-  redis:
-    image: redis:7-alpine
-    container_name: study-abroad-redis
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
-    restart: always
-
   # Backend Service (Express + Prisma + BullMQ)
   server:
     build: ./server
     container_name: study-abroad-server
+    # Load trực tiếp tất cả biến từ file .env vào trong container
+    env_file:
+      - .env 
     environment:
       - NODE_ENV=production
-      - PORT=5000
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=${DATABASE_URL} # Provided via .env in root
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-    depends_on:
-      - redis
+    # Mount source code for live-reload
+    volumes:
+      - ./server:/app
+      - /app/node_modules # Do not override container node_modules
     ports:
       - '5000:5000'
     networks:
@@ -36,6 +24,10 @@ services:
   client:
     build: ./client
     container_name: study-abroad-client
+    # Mount source code for HMR
+    volumes:
+      - ./client:/app
+      - /app/node_modules # Do not override container node_modules
     ports:
       - '80:80'
     depends_on:
@@ -47,6 +39,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  redis_data:

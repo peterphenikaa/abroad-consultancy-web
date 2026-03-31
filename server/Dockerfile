@@ -1,18 +1,20 @@
-FROM node:18-alpine
-
+FROM node:22
 WORKDIR /app
 
-# Install dependencies first for caching
+# Caching dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy prisma schema before generate
+# Copy Prisma config and schema and generate
+COPY prisma.config.ts ./
 COPY prisma ./prisma/
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://placeholder:5432" npx prisma generate
 
-# Copy rest of the applications
+# No need to copy EVERYTHING here if we use volumes in Compose, 
+# but it's good practice for standalone builds
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5000 
 
-CMD ["node", "index.js"]
+# Default to development mode
+CMD ["npm", "run", "dev"]
