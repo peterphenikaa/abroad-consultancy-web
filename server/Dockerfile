@@ -1,10 +1,12 @@
-FROM node:18-alpine
+# Nâng cấp lên bản 22-alpine cho nó "máu" và đúng yêu cầu của Prisma
+FROM node:22-alpine
 
 WORKDIR /app
 
 # 1. Copy package.json (Đứng từ thư mục root của Repo)
 COPY server/package*.json ./
 
+# Ép nó cài đặt kể cả có warning engine (để chắc chắn)
 RUN npm install
 
 # 2. Copy thư mục prisma (Phải ghi rõ đường dẫn từ root repo)
