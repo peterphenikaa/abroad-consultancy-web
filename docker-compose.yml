@@ -1,43 +1,181 @@
 version: '3.8'
 
 services:
-  # Backend Service (Express + Prisma + BullMQ)
-  server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
-    container_name: study-abroad-server
-    # Load trực tiếp tất cả biến từ file .env vào trong container
-    env_file:
-      - .env 
+  # ==========================================
+  # 🗄️ INFRASTRUCTURE & DATABASES
+  # ==========================================
+  postgres:
+    image: postgres:15
     environment:
-      - NODE_ENV=production
-    # Mount source code for live-reload
-    volumes:
-      - ./server:/app
-      - /app/node_modules # Do not override container node_modules
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: main_db
     ports:
-      - '5000:5000'
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
-    restart: always
 
-  # Frontend Service (React + Nginx)
-  client:
-    build: ./client
-    container_name: study-abroad-client
-    # Mount source code for HMR
-    volumes:
-      - ./client:/app
-      - /app/node_modules # Do not override container node_modules
+  mongodb:
+    image: mongo:6
     ports:
-      - '80:80'
-    depends_on:
-      - server
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
     networks:
       - app-network
-    restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # [THAY THẾ S3 BẰNG MINIO]
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    ports:
+      - "9000:9000" # API Port
+      - "9001:9001" # Web UI Port
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "29092:29092"
+    networks:
+      - app-network
+  
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  # ==========================================
+  # ⚙️ MICROSERVICES
+  # ==========================================
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - user-service
+    networks:
+      - app-network
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      - DB_HOST=postgres
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - app-network
+
+  user-service:
+    build: ./services/user-service
+    environment:
+      - DB_HOST=postgres
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - app-network
+
+  ai-rag-service:
+    build: ./services/ai-rag-service
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/ai_chat
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - mongodb
+      - kafka
+    networks:
+      - app-network
+
+  content-service:
+    build: ./services/content-service
+    environment:
+      - DB_HOST=postgres
+      - KAFKA_BROKER=kafka:9092
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+    depends_on:
+      - postgres
+      - kafka
+      - minio
+    networks:
+      - app-network
+
+  # TODO: Bạn có thể bật thêm config cho các service dưới đây khi bắt đầu code
+  # exam-service:
+  #   build: ./services/exam-service
+  # quiz-service:
+  #   build: ./services/quiz-service
+  # payment-service:
+  #   build: ./services/payment-service
+  # notification-service:
+  #   build: ./services/notification-service
+  # search-service:
+  #   build: ./services/search-service
+  # analytics-service:
+  #   build: ./services/analytics-service
+
+  # ==========================================
+  # 💻 CLIENT
+  # ==========================================
+  client:
+    build: 
+      context: ./client
+    ports:
+      - "80:80"
+    networks:
+      - app-network
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  minio_data:
+  es_data:
