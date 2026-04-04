@@ -1,1 +1,1 @@
-﻿{ "name": "auth-service", "version": "1.0.0", "main": "src/index.js", "scripts": { "start": "node src/index.js" } }
+{"name":"auth-service","version":"1.0.0","main":"src/index.js","scripts":{"start":"node src/index.js"},"dependencies":{"@supabase/supabase-js":"^2.101.1","ioredis":"^5.10.1","kafkajs":"^2.2.4","pg":"^8.20.0"}}
