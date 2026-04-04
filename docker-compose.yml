@@ -2,38 +2,9 @@ version: '3.8'
 
 services:
   # ==========================================
-  # 🗄️ INFRASTRUCTURE & DATABASES
+  # 🗄️ INFRASTRUCTURE & DATABASES (LOCAL)
   # ==========================================
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: main_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
-  mongodb:
-    image: mongo:6
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - app-network
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - app-network
-
-  # [THAY THẾ S3 BẰNG MINIO]
+  # [S3 bằng MinIO]
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -72,26 +43,15 @@ services:
       - "29092:29092"
     networks:
       - app-network
-  
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    networks:
-      - app-network
 
   # ==========================================
   # ⚙️ MICROSERVICES
   # ==========================================
   api-gateway:
     build: ./api-gateway
+    env_file: .env
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - auth-service
       - user-service
@@ -100,64 +60,68 @@ services:
 
   auth-service:
     build: ./services/auth-service
+    env_file: .env
     environment:
-      - DB_HOST=postgres
       - KAFKA_BROKER=kafka:9092
     depends_on:
-      - postgres
       - kafka
     networks:
       - app-network
 
   user-service:
     build: ./services/user-service
+    env_file: .env
     environment:
-      - DB_HOST=postgres
       - KAFKA_BROKER=kafka:9092
     depends_on:
-      - postgres
       - kafka
     networks:
       - app-network
 
   ai-rag-service:
     build: ./services/ai-rag-service
+    env_file: .env
     environment:
-      - MONGO_URI=mongodb://mongodb:27017/ai_chat
       - KAFKA_BROKER=kafka:9092
     depends_on:
-      - mongodb
       - kafka
     networks:
       - app-network
 
   content-service:
     build: ./services/content-service
+    env_file: .env
     environment:
-      - DB_HOST=postgres
       - KAFKA_BROKER=kafka:9092
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=password123
     depends_on:
-      - postgres
       - kafka
       - minio
     networks:
       - app-network
 
-  # TODO: Bạn có thể bật thêm config cho các service dưới đây khi bắt đầu code
+  # Các service khác (Bật lên khi code)
   # exam-service:
   #   build: ./services/exam-service
+  #   env_file: .env
   # quiz-service:
   #   build: ./services/quiz-service
+  #   env_file: .env
   # payment-service:
   #   build: ./services/payment-service
+  #   env_file: .env
   # notification-service:
   #   build: ./services/notification-service
+  #   env_file: .env
   # search-service:
   #   build: ./services/search-service
+  #   env_file: .env
   # analytics-service:
   #   build: ./services/analytics-service
+  #   env_file: .env
 
   # ==========================================
   # 💻 CLIENT
@@ -165,6 +129,7 @@ services:
   client:
     build: 
       context: ./client
+    env_file: .env
     ports:
       - "80:80"
     networks:
@@ -175,7 +140,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
-  mongodb_data:
   minio_data:
-  es_data:
