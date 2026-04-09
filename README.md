@@ -96,19 +96,79 @@ cd client && npm install && npm run dev
 
 ## ⚙️ Services
 
-| Service              | Port | Purpose          | Database           |
-| -------------------- | ---- | ---------------- | ------------------ |
-| api-gateway          | 8080 | Route, WAF, auth | -                  |
-| auth-service         | 3000 | Authentication   | PostgreSQL         |
-| user-service         | 3001 | User profiles    | PostgreSQL         |
-| ai-rag-service       | 3002 | AI + RAG + Chat  | MongoDB + Pinecone |
-| content-service      | 3003 | Course content   | PostgreSQL + MinIO |
-| exam-service         | 3004 | Exam system      | PostgreSQL         |
-| quiz-service         | 3005 | Quiz system      | PostgreSQL         |
-| payment-service      | 3006 | Payments         | PostgreSQL         |
-| notification-service | 3007 | Email/SMS        | PostgreSQL         |
-| search-service       | 3008 | Full-text search | Elasticsearch      |
-| analytics-service    | 3009 | Metrics          | PostgreSQL         |
+| Service                  | Port | Purpose                                   | Database/Storage   |
+| ------------------------ | ---- | ----------------------------------------- | ------------------ |
+| `api-gateway`            | 8080 | Cổng giao tiếp, Rate limit, Auth, Routing | Redis (Rate limit) |
+| `auth-service`           | 3001 | Đăng nhập, JWT, OAuth (Supabase)          | PostgreSQL, Redis  |
+| `user-service`           | 3002 | Quản lý Profile người dùng                | PostgreSQL         |
+| `ai-rag-service`         | 3003 | Tư vấn du học AI bằng RAG                 | Pinecone, MongoDB  |
+| `content-service`        | 3004 | Quản lý khóa học, bài giảng video/PDF     | PostgreSQL, MinIO  |
+| `exam-service`           | 3005 | Bài thi thử (Mock Test)                   | PostgreSQL         |
+| `quiz-service`           | 3006 | Bài tập trắc nghiệm ngắn                  | PostgreSQL         |
+| `search-service`         | 3007 | Tìm kiếm Full-text nội dung               | Elasticsearch      |
+| `payment-service`        | 3008 | Thanh toán học phí, dịch vụ               | PostgreSQL         |
+| `notification-service`   | 3009 | Gửi Email, SMS qua Kafka events           | MongoDB (Log)      |
+| `analytics-service`      | 3010 | Thu thập metrics, thống kê học tập        | Elasticsearch      |
+| `data-crawler-service`\* | -    | (Dự kiến) Crawl data trường học, visa     | N/A                |
+
+## 🗺️ Roadmap & To-Do List (End-to-End)
+
+### Giai đoạn 1: Infrastructure & Foundation (Hạ tầng cơ sở)
+
+- [x] Khởi tạo kiến trúc monorepo & thư mục microservices.
+- [x] Setup `docker-compose.yml` (Postgres, Mongo, Redis, Kafka, Zookeeper, MinIO).
+- [x] Cấu hình API Gateway (Kong/Express): Thiết lập proxy routing tới các services.
+- [ ] Setup Middleware tại Gateway: Cấu hình Rate Limiting (Redis), JWT Authentication chặn request ảo.
+- [x] Thiết lập hệ thống Typography & Design Tokens (Tailwind + CSS variables) cho Frontend.
+
+### Giai đoạn 2: Core Microservices (Phần nghiệp vụ lõi)
+
+- [ ] **Auth & User**: Hoàn thiện API Đăng nhập/Đăng ký, cấp phát và verify JWT. Tích hợp Supabase.
+- [ ] **Content Service**: Xây dựng API CRUD khóa học. Code luồng upload file (Video/PDF bài giảng) lên MinIO bằng presigned URL.
+- [ ] **Exam & Quiz Service**: Thiết kế Database Schema lưu trữ ngân hàng câu hỏi, bài thi chứng chỉ (IETLS/TOEFL). Viết API chấm điểm tự động.
+- [ ] **Giao tiếp liên dịch vụ (Kafka)**: Setup các Kafka Producer/Consumer cơ bản. Ví dụ: Tạo user mới -> Bắn event `USER_CREATED` ra Message queue.
+
+### Giai đoạn 3: AI & Data Pipeline (Trái tim của hệ thống)
+
+- [ ] Xây dựng **Data Crawler Service**: Viết scripts định kỳ tự động thu thập thông tin quy chế Visa, học phí, các trường đại học.
+- [ ] **ETL Pipeline**: Làm sạch dữ liệu crawl được, lưu bản gốc vào PostgreSQL.
+- [ ] **Search Service (Elasticsearch)**: Đồng bộ index dữ liệu từ Postgres qua Elasticsearch phục vụ tìm kiếm toàn văn bản siêu tốc.
+- [ ] **AI RAG Service**:
+  - Chuyển đổi dữ liệu văn bản thành Vector Embeddings (via OpenAI/Claude API) và đưa vào Pinecone.
+  - Xây dựng luồng Chatbot: Nhận câu hỏi -> Tìm kiếm ngữ cảnh trong Pinecone -> Nạp data vào Prompt -> LLM trả lời chuyên sâu.
+
+### Giai đoạn 4: Advanced Services (Các tính năng nâng cao)
+
+- [ ] **Notification Service**: Lắng nghe Kafka event (như `PAYMENT_SUCCESS`, `EXAM_REMINDER`) để gửi Email/SMS cho học viên.
+- [ ] **Payment Service**: Tích hợp cổng thanh toán (Stripe / VNPay) thực hiện mua khoá học, dịch vụ làm hồ sơ.
+- [ ] **Analytics Service**: Tracking hành vi người học, thời gian hoàn thành khóa học, phân tích điểm yếu để gợi ý ôn tập.
+
+### Giai đoạn 5: Frontend Development (Giao diện người dùng)
+
+- [ ] Xây dựng hệ thống UI Components (Dựa trên File `theme.css` + Radix/Shadcn UI).
+- [ ] Cấu trúc Routing (React Router) cho App. Thực hiện luồng Login / Protected Routes.
+- [ ] Dashboard Học Sinh: Xem tiến trình học tập, khoá học đã mua, bài test sắp tới.
+- [ ] Giao diện Bài Test: Luồng làm bài thi kéo thả, thi tính giờ, nghe audio tương tự nền tảng thi thật.
+- [ ] Giao diện RAG AI Chat: Khung chat real-time, có hiển thị trích dẫn (citations) bài viết mà AI lấy dữ liệu để trả lời.
+- [ ] Admin Portal: Upload tài liệu CMS, xem thống kê doanh thu, quản lý account học viên.
+
+### Giai đoạn 6: Testing, DevOps & Deployment (Triển khai & Vận hành)
+
+- [ ] Viết Unit/Integration Test cho các nghiệp vụ chính (RAG, Chấm điểm bài thi, Thanh toán).
+- [ ] Thiết lập CI/CD pipelines (GitHub Actions/GitLab CI) để tự động check code, build docker images.
+- [ ] Cấu hình Monitor: ELK Stack (xem Log tập trung), Prometheus & Grafana (Theo dõi sức khoẻ CPU, RAM).
+- [ ] Tối ưu hóa Dockerfiles (Dùng multi-stage build cho nhẹ) và Deploy lên Cloud cluster (AWS / Azure).
+      | api-gateway | 8080 | Route, WAF, auth | - |
+      | auth-service | 3000 | Authentication | PostgreSQL |
+      | user-service | 3001 | User profiles | PostgreSQL |
+      | ai-rag-service | 3002 | AI + RAG + Chat | MongoDB + Pinecone |
+      | content-service | 3003 | Course content | PostgreSQL + MinIO |
+      | exam-service | 3004 | Exam system | PostgreSQL |
+      | quiz-service | 3005 | Quiz system | PostgreSQL |
+      | payment-service | 3006 | Payments | PostgreSQL |
+      | notification-service | 3007 | Email/SMS | PostgreSQL |
+      | search-service | 3008 | Full-text search | Elasticsearch |
+      | analytics-service | 3009 | Metrics | PostgreSQL |
 
 ## 🚪 API Gateway (Kong Gateway)
 
