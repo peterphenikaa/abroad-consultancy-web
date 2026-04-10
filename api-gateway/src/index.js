@@ -2,11 +2,90 @@
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
+const { createClient } = require("redis");
+const { rateLimit } = require("express-rate-limit");
+const RedisStore = require("rate-limit-redis").default;
+const jwt = require("jsonwebtoken");
+const helmet = require("helmet");
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("FATAL ERROR: JWT_SECRET is required in .env file");
+}
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+app.use(helmet());
 app.use(cors());
+
+app.use((req, _res, next) => {
+  console.log(`[Gateway] ${req.method} ${req.url}`);
+  next();
+});
+
+const redisClient = createClient({
+  url: process.env.REDIS_URL || "redis://redis:6379",
+});
+
+redisClient.on("error", (err) => console.error("[Redis Error]:", err));
+redisClient.on("connect", () =>
+  console.log("[Redis] Connected successfully ⚡"),
+);
+
+redisClient
+  .connect()
+  .catch((err) => console.error("[Redis] Kết nối ban đầu thất bại:", err));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.sendCommand(args),
+  }),
+  message: {
+    success: false,
+    message: "Gửi quá nhiều yêu cầu, vui lòng thử lại sau",
+  },
+});
+
+app.use("/api", limiter);
+
+const authenticateJWT = (req, res, next) => {
+  const publicRoutes = new Set([
+    "/api/auth/login",
+    "/api/auth/register",
+    "/health",
+  ]);
+
+  if (publicRoutes.has(req.path)) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          message: "Token không hợp lệ hoặc đã hết hạn",
+        });
+      }
+      req.headers["x-user-id"] = user.id || user.userId;
+      next();
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: "Không tìm thấy mã Token xác thực (Unauthorized)",
+    });
+  }
+};
+
+app.use(authenticateJWT);
 
 const routes = {
   "/api/auth": process.env.AUTH_SERVICE_URL || "http://auth-service:3001",
@@ -31,18 +110,27 @@ for (const [path, target] of Object.entries(routes)) {
     createProxyMiddleware({
       target,
       changeOrigin: true,
+      proxyTimeout: 5000,
+      timeout: 5000,
       pathRewrite: {
         [`^${path}`]: "",
+      },
+      onProxyReq: (proxyReq, req) => {
+        if (req.headers["x-user-id"]) {
+          proxyReq.setHeader("x-user-id", req.headers["x-user-id"]);
+        }
       },
       onError: (err, _req, res) => {
         console.error(
           `[Gateway Error] Proxy to ${target} failed:`,
           err.message,
         );
-        res.status(502).json({
-          success: false,
-          message: "Service is temporarily down or restarting",
-        });
+        if (!res.headersSent) {
+          res.status(502).json({
+            success: false,
+            message: "Service is temporarily down or restarting",
+          });
+        }
       },
     }),
   );
