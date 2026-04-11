@@ -118,7 +118,7 @@ cd client && npm install && npm run dev
 - [x] Khởi tạo kiến trúc monorepo & thư mục microservices.
 - [x] Setup `docker-compose.yml` (Postgres, Mongo, Redis, Kafka, Zookeeper, MinIO).
 - [x] Cấu hình API Gateway (Kong/Express): Thiết lập proxy routing tới các services.
-- [ ] Setup Middleware tại Gateway: Cấu hình Rate Limiting (Redis), JWT Authentication chặn request ảo.
+- [x] Setup Middleware tại Gateway: Cấu hình Rate Limiting (Redis), JWT Authentication chặn request ảo.
 - [x] Thiết lập hệ thống Typography & Design Tokens (Tailwind + CSS variables) cho Frontend.
 
 ### Giai đoạn 2: Core Microservices (Phần nghiệp vụ lõi)
