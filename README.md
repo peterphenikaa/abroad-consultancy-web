@@ -124,13 +124,13 @@ cd client && npm install && npm run dev
 ### Giai đoạn 2: Core Microservices (Phần nghiệp vụ lõi)
 
 - [ ] **Auth & User**: Hoàn thiện API Đăng nhập/Đăng ký, cấp phát và verify JWT. Tích hợp Supabase.
-- [ ] **Content Service**: Xây dựng API CRUD khóa học. Code luồng upload file (Video/PDF bài giảng) lên MinIO bằng presigned URL.
-- [ ] **Exam & Quiz Service**: Thiết kế Database Schema lưu trữ ngân hàng câu hỏi, bài thi chứng chỉ (IETLS/TOEFL). Viết API chấm điểm tự động.
-- [ ] **Giao tiếp liên dịch vụ (Kafka)**: Setup các Kafka Producer/Consumer cơ bản. Ví dụ: Tạo user mới -> Bắn event `USER_CREATED` ra Message queue.
+- [x] **Content Service**: Xây dựng API CRUD khóa học. Code luồng upload file (Video/PDF bài giảng) lên MinIO bằng presigned URL. 
+- [ ] **Exam & Quiz Service**: Thiết kế Database Schema lưu trữ ngân hàng câu hỏi, bài thi chứng chỉ (IETLS/TOEFL). Viết API chấm điểm tự động. 
+- [ ] **Giao tiếp liên dịch vụ (Kafka)**: Setup các Kafka Producer/Consumer cơ bản. Ví dụ: Tạo user mới -> Bắn event `USER_CREATED` ra Message queue. 
 
 ### Giai đoạn 3: AI & Data Pipeline (Trái tim của hệ thống)
 
-- [ ] Xây dựng **Data Crawler Service**: Viết scripts định kỳ tự động thu thập thông tin quy chế Visa, học phí, các trường đại học.
+- [x] Xây dựng **Data Crawler Service**: Viết scripts định kỳ tự động thu thập thông tin quy chế Visa, học phí, các trường đại học.
 - [ ] **ETL Pipeline**: Làm sạch dữ liệu crawl được, lưu bản gốc vào PostgreSQL.
 - [ ] **Search Service (Elasticsearch)**: Đồng bộ index dữ liệu từ Postgres qua Elasticsearch phục vụ tìm kiếm toàn văn bản siêu tốc.
 - [ ] **AI RAG Service**:
