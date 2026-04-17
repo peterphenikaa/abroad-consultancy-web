@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Course {
+  courseId        String       @id @default(uuid())
+  title           String       @db.VarChar(255)
+  description     String?      @db.Text
+  thumbnailUrl    String?      @db.Text
+  subject         String?      @db.VarChar(100)
+  curriculum      String?      @db.VarChar(100)
+  level           String?      @db.VarChar(50) 
+  instructorId    String       @db.Uuid
+  price           Decimal      @default(0) @db.Decimal(12, 2)
+  isFree          Boolean      @default(true)
+  tags            Json?        @default("[]")
+  status          CourseStatus @default(DRAFT)
+  version         Int          @default(1)
+  parentCourseId  String?      @db.Uuid
+  totalDuration   Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  modules         Module[]    
+}
+
+model Module {
+  moduleId    String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  orderIndex  Int
+  status      Status   @default(DRAFT)
+
+  lessons     Lesson[] 
+}
+
+model Lesson {
+  lessonId     String        @id @default(uuid())
+  moduleId     String
+  module       Module        @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  title        String        @db.VarChar(255)
+  objectives   String?       @db.Text
+  duration     Int?
+  orderIndex   Int
+  status       Status        @default(DRAFT)
+  
+  contentItems ContentItem[] 
+}
+
+model ContentItem {
+  contentId   String      @id @default(uuid())
+  lessonId    String
+  lesson      Lesson      @relation(fields: [lessonId], references: [lessonId], onDelete: Cascade)
+  type        ContentType
+  title       String?
+  description String?     @db.Text
+  contentUrl  String?     @db.Text
+  metadata    Json?       
+  orderIndex  Int
+  status      Status      @default(DRAFT)
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
+enum ContentType {
+  VIDEO
+  DOCUMENT
+  IMAGE
+  AUDIO
+  OTHER
+}
