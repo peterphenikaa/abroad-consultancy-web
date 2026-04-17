@@ -50,6 +50,9 @@ services:
   api-gateway:
     build: ./api-gateway
     env_file: .env
+    environment:
+      - PORT=8080
+      - CONTENT_SERVICE_URL=http://content-service:3000
     ports:
       - "8081:8080"
     depends_on:
@@ -92,11 +95,14 @@ services:
     build: ./services/content-service
     env_file: .env
     environment:
+      - PORT=3000
       - KAFKA_BROKER=kafka:9092
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=password123
+    ports:
+      - "3000:3000"
     depends_on:
       - kafka
       - minio
@@ -127,7 +133,7 @@ services:
   # 💻 CLIENT
   # ==========================================
   client:
-    build: 
+    build:
       context: ./client
     env_file: .env
     ports:
