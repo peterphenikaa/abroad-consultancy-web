@@ -1,13 +1,14 @@
+import { env } from './config/env';
 import { log } from 'node:console';
 import app from './app';
 
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
 
 const startServer = () => {
   try {
     const server = app.listen(PORT, () => {
       // TODO: pino log
-      console.log(` Auth-service is running on port ${PORT}`);
+      console.log(` Auth-service is running in ${env.NODE_ENV} mode on port ${PORT}`);
       console.log(`󰿶 Health check: http://localhost:${PORT}/health`);
     });
 
