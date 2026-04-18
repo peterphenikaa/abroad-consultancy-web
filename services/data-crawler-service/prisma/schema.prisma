@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("CRAWLER_DATABASE_URL")
+  directUrl = env("CRAWLER_DIRECT_URL")
+}
+
+model RawUniversityData {
+  id             String   @id @default(uuid())
+  countryId      String
+  source         String
+  universityName String
+  location       String?
+  website        String?
+  description    String?
+  sourceUrl      String
+  rawJson        Json?
+  crawledAt      DateTime @default(now())
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("raw_university_data")
+}
+
+model RawVisaData {
+  id             String   @id @default(uuid())
+  countryId      String
+  title          String
+  rawTextContent String   @db.Text
+  sourceUrl      String
+  crawledAt      DateTime @default(now())
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("raw_visa_data")
+}
