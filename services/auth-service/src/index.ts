@@ -1,6 +1,6 @@
 import { env } from './config/env';
-import { log } from 'node:console';
 import app from './app';
+import { logger } from './config/logger';
 
 const PORT = env.PORT;
 
@@ -8,19 +8,19 @@ const startServer = () => {
   try {
     const server = app.listen(PORT, () => {
       // TODO: pino log
-      console.log(` Auth-service is running in ${env.NODE_ENV} mode on port ${PORT}`);
-      console.log(`󰿶 Health check: http://localhost:${PORT}/health`);
+      logger.info(` Auth-service is running in ${env.NODE_ENV} mode on port ${PORT}`);
+      logger.info(`󰿶 Health check: http://localhost:${PORT}/health`);
     });
 
     // Graceful Shutdown
     process.on('SIGTERM', () => {
-      log('SIGTERM signal received: closing HTTP server');
+      logger.info('SIGTERM signal received: closing HTTP server');
       server.close(() => {
-        log(' HTTP server closed');
+        logger.info(' HTTP server closed');
       });
     });
   } catch (error) {
-    console.error(' Error starting server', error);
+    logger.fatal({ err: error }, ' Error starting server');
     process.exit(1);
   }
 };

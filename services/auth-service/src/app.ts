@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import { httpLogger } from './config/logger';
 
 const app = express();
 
@@ -8,6 +9,8 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+app.use(httpLogger);
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
