@@ -32,3 +32,6 @@ client/dist/
 
 # Docker
 docker-compose.override.yml
+
+# Doc
+AGENTS.md
