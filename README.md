@@ -132,7 +132,7 @@ cd client && npm install && npm run dev
 
 - [x] Xây dựng **Data Crawler Service**: Viết scripts định kỳ tự động thu thập thông tin quy chế Visa, học phí, các trường đại học.
 - [x] **ETL Pipeline**: Làm sạch dữ liệu crawl được, lưu bản gốc vào PostgreSQL.
-- [ ] **Search Service (Elasticsearch)**: Đồng bộ index dữ liệu từ Postgres qua Elasticsearch phục vụ tìm kiếm toàn văn bản siêu tốc.
+- [x] **Search Service (Elasticsearch)**: Đồng bộ index dữ liệu từ Postgres qua Elasticsearch phục vụ tìm kiếm toàn văn bản siêu tốc.
 - [ ] **AI RAG Service**:
   - Chuyển đổi dữ liệu văn bản thành Vector Embeddings (via OpenAI/Claude API) và đưa vào Pinecone.
   - Xây dựng luồng Chatbot: Nhận câu hỏi -> Tìm kiếm ngữ cảnh trong Pinecone -> Nạp data vào Prompt -> LLM trả lời chuyên sâu.
