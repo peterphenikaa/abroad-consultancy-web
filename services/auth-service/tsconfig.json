@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "forceconsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
