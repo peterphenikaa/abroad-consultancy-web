@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { env } from '../config/env';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../config/logger';
 
 // 1. init conneciton pool form
 const pool = new Pool({
@@ -21,9 +22,9 @@ export const connectDB = async () => {
   try {
     // test the connection
     await prisma.$queryRaw`SELECT 1`;
-    console.log('[PostgreSQL] Connected succesfully via Prisma Adapter');
+    logger.info('[PostgreSQL] Connected successfully via Prisma adapter');
   } catch (error) {
-    console.error('[PostgreSQL] connection failed', error);
-    process.exit(1);
+    logger.error({ err: error }, '[PostgreSQL] Connection failed');
+    throw error;
   }
 };

@@ -1,7 +1,7 @@
 # Auth Service
 
 - Authentication
-- Authoriztion
+- Authorization
 - Session control
 
 ## Tech stack
@@ -16,7 +16,7 @@
 - Node.js >= 20
 - Docker & Docker Compose
 
-## Geting started
+## Getting started
 
 ### 1. Thiết lập biến môi trường
 
@@ -32,7 +32,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/auth_db?schema=public"
 REDIS_URL="redis://localhost:6379"
 ```
 
-### 2. Lib install
+### 2. Install dependencies
 
 ```bash
 npm i

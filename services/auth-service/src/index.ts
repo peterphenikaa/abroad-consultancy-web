@@ -8,7 +8,7 @@ const PORT = env.PORT;
 
 const startServer = async () => {
   try {
-    logger.info(`Starting Auth Service in ${env.NODE_ENV} mode... `);
+    logger.info(`Starting auth-service in ${env.NODE_ENV} mode`);
 
     // db wait
     await connectDB();
@@ -16,24 +16,24 @@ const startServer = async () => {
     // redis wait
     const isRedisConnected = await checkRedis();
     if (!isRedisConnected) {
-      throw new Error(' Redis connection loss');
+      throw new Error('Redis connection lost');
     }
 
     const server = app.listen(PORT, () => {
-      logger.info(` Auth-service is running in ${env.NODE_ENV} mode on port ${PORT}`);
-      logger.info(`󰿶 Health check: http://localhost:${PORT}/health`);
-      logger.info(` Readliness check: http://localhost:${PORT}/ready`);
+      logger.info(`auth-service is running in ${env.NODE_ENV} mode on port ${PORT}`);
+      logger.info(`Health check: http://localhost:${PORT}/health`);
+      logger.info(`Readiness check: http://localhost:${PORT}/ready`);
     });
 
     // Graceful Shutdown
     process.on('SIGTERM', () => {
       logger.info('SIGTERM signal received: closing HTTP server');
       server.close(() => {
-        logger.info(' HTTP server closed');
+        logger.info('HTTP server closed');
       });
     });
   } catch (error) {
-    logger.fatal({ err: error }, ' Error starting server');
+    logger.fatal({ err: error }, 'Error starting server');
     process.exit(1);
   }
 };

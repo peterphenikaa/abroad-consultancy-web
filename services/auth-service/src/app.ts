@@ -27,7 +27,7 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// Readliness endpoint
+// Readiness endpoint
 app.get('/ready', async (_req: Request, res: Response) => {
   try {
     // 1. DB check
@@ -37,20 +37,25 @@ app.get('/ready', async (_req: Request, res: Response) => {
     const isRedisUp = await checkRedis();
     if (!isRedisUp) throw new Error('Redis connection loss');
 
-    // reutrn 200 if both alive
+    // return 200 if both are alive
     res.status(200).json({
       status: 'READY',
       db: 'UP',
       redis: 'UP',
     });
   } catch (error) {
-    logger.error({ err: error }, 'Readliness check failed');
+    logger.error({ err: error }, 'Readiness check failed');
+    res.status(503).json({
+      status: 'NOT_READY',
+      db: 'DOWN_OR_UNREACHABLE',
+      redis: 'DOWN_OR_UNREACHABLE',
+    });
   }
 });
 
 // Global Error handler
 app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
-  logger.error({ err }, 'Unhandle Exception');
+  logger.error({ err }, 'Unhandled exception');
 
   const statusCode = err.status || 500;
   res.status(statusCode).json({
