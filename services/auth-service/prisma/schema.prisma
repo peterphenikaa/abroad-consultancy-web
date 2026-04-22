@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Role base on RBAC
+enum Role {
+  STUDENT
+  TEACHER
+  ORG_ADMIN
+  CONTENT_CREATOR
+  SUPER_ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  LOCKED
+  BANNED
+}
+
+model User {
+  id              String  @id @default(uuid()) @db.Uuid
+  email           String  @unique @db.VarChar(255)
+  phone_hash      String? @db.VarChar(255)
+  password_hash   String  @db.VarChar(255)
+  role            Role    @default(STUDENT)
+  status          Status  @default(ACTIVE)
+  subscription_id String? @db.VarChar(100)
+  org_id          String? @db.VarChar(100)
+
+  // Timestamps
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? // Phục vụ tính năng Soft Delete
+
+  // Relationships
+  sessions UserSession[]
+
+  @@index([email]) // Tối ưu hóa khi tìm kiếm user lúc đăng nhập
+  @@map("users")
+}
+
+model UserSession {
+  id          String  @id @default(uuid()) @db.Uuid
+  user_id     String  @db.Uuid
+  device_info String? @db.Text
+  ip          String? @db.VarChar(45)
+
+  // Timestamps
+  created_at DateTime @default(now())
+  expires_at DateTime
+
+  // Relationships
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at]) // Tối ưu hóa cho job dọn dẹp session hết hạn
+  @@map("user_sessions")
+}

@@ -7,6 +7,8 @@ node_modules/
 **/.env
 .env.local
 .env.*.local
+.env.test
+.env.production
 
 # Logs
 npm-debug.log*
@@ -32,3 +34,7 @@ client/dist/
 
 # Docker
 docker-compose.override.yml
+docker-compose.dev.yml
+
+# Doc
+AGENTS.md
