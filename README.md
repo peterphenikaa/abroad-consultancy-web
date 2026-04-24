@@ -32,7 +32,7 @@ Hệ thống web du học với AI theo chuẩn Microservices cho phép scale đ
 ## 📂 Cấu trúc thư mục
 
 ```
-/do_an_lien_nganh
+/abroad-consultancy-web
 ├── client/              # React Frontend (Port 80)
 ├── api-gateway/         # API Gateway (Port 8080)
 ├── services/            # Microservices
