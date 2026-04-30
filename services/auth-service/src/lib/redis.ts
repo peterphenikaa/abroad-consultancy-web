@@ -6,7 +6,7 @@ import { logger } from '../config/logger';
  *  1. Init Redis client singleton
  *  - retry / backoff configuration
  */
-export const redis = new Redis(env.REDIS_URL, {
+export const redisClient = new Redis(env.REDIS_URL, {
   // no retry limit
   maxRetriesPerRequest: null,
 
@@ -20,12 +20,12 @@ export const redis = new Redis(env.REDIS_URL, {
 });
 
 // Listen for event -> logger
-redis.on('connect', () => {
+redisClient.on('connect', () => {
   logger.info('[Redis] Connected successfully');
 });
 
-redis.on('error', () => {
-  logger.error('[Redis] Connection error');
+redisClient.on('error', (err) => {
+  logger.error({ err }, '[Redis] Connection error');
 });
 
 /**
@@ -33,7 +33,7 @@ redis.on('error', () => {
  */
 export const checkRedis = async (): Promise<boolean> => {
   try {
-    const res = await redis.ping();
+    const res = await redisClient.ping();
     return res === 'PONG';
   } catch (error) {
     logger.error({ err: error }, '[Redis] Ping failed ');
@@ -48,7 +48,5 @@ export const checkRedis = async (): Promise<boolean> => {
 export const REDIS_KEYS = {
   SESSION: 'auth:session:',
   RATELIMIT: 'auth:ratelimit:',
+  BLACKLIST: 'auth:refresh:blacklist:',
 } as const;
-
-// redis connectionk
-export const connectRedis = () => {};
