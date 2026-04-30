@@ -8,8 +8,8 @@ const RedisStore = require("rate-limit-redis").default;
 const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("FATAL ERROR: JWT_SECRET is required in .env file");
+if (!process.env.JWT_SECRET && !process.env.JWT_PUBLIC_KEY) {
+  throw new Error("FATAL ERROR: Either JWT_SECRET or JWT_PUBLIC_KEY is required in .env file");
 }
 
 const app = express();
@@ -56,6 +56,7 @@ const authenticateJWT = (req, res, next) => {
   const publicRoutes = new Set([
     "/api/auth/login",
     "/api/auth/register",
+    "/api/auth/refresh",
     "/health",
   ]);
 
@@ -67,7 +68,13 @@ const authenticateJWT = (req, res, next) => {
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    // Support both HS256 (JWT_SECRET) and RS256 (JWT_PUBLIC_KEY)
+    const verifyOptions = process.env.JWT_PUBLIC_KEY
+      ? { algorithms: ["RS256"] }
+      : {};
+    const secret = process.env.JWT_PUBLIC_KEY || process.env.JWT_SECRET;
+
+    jwt.verify(token, secret, verifyOptions, (err, user) => {
       if (err) {
         return res.status(403).json({
           success: false,
