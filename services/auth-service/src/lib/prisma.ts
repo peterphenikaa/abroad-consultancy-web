@@ -12,11 +12,14 @@ const pool = new Pool({
 // 2. create Prisma adapter
 const adapter = new PrismaPg(pool);
 
-// 3. init Prisma clietn with adapter
+// 3. init Prisma client with adapter
 export const prisma = new PrismaClient({
   adapter,
   log: env.NODE_ENV == 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
+
+// Backward-compatible alias
+export const prismaClient = prisma;
 
 export const connectDB = async () => {
   try {
