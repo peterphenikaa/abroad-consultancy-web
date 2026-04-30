@@ -27,6 +27,7 @@ model User {
   email           String  @unique @db.VarChar(255)
   phone_hash      String? @db.VarChar(255)
   password_hash   String  @db.VarChar(255)
+  full_name       String? @db.VarChar(255)
   role            Role    @default(STUDENT)
   status          Status  @default(ACTIVE)
   subscription_id String? @db.VarChar(100)
@@ -45,10 +46,13 @@ model User {
 }
 
 model UserSession {
-  id          String  @id @default(uuid()) @db.Uuid
-  user_id     String  @db.Uuid
-  device_info String? @db.Text
-  ip          String? @db.VarChar(45)
+  id                 String    @id @default(uuid()) @db.Uuid
+  user_id            String    @db.Uuid
+  device_info        String?   @db.Text
+  ip                 String?   @db.VarChar(45)
+  refresh_token_hash String?   @db.VarChar(255)
+  revoked_at         DateTime? @db.Timestamp(6)
+  last_used_at       DateTime? @db.Timestamp(6)
 
   // Timestamps
   created_at DateTime @default(now())
@@ -59,5 +63,6 @@ model UserSession {
 
   @@index([user_id])
   @@index([expires_at]) // Tối ưu hóa cho job dọn dẹp session hết hạn
+  @@index([refresh_token_hash]) // Tối ưu hóa cho lookup refresh token và revocation check
   @@map("user_sessions")
 }
