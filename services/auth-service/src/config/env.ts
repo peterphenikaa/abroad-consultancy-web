@@ -15,13 +15,18 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // Auth config
-  BCRYPT_SALT_ROUNDS: z.string().transform(Number).default(10),
+  BCRYPT_ROUNDS: z.string().transform(Number).default(12),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
-  REFRESH_TOKEN_TTL: z.string().default('30'),
+  REFRESH_TOKEN_TTL_DAYS: z.string().transform(Number).default(30),
+
+  // Cookie config
+  COOKIE_DOMAIN: z.string().default('localhost'),
+  COOKIE_SECURE: z.string().default('false').transform((val) => val === 'true'),
 
   // JWT config
   JWT_PRIVATE_KEY: z.string().min(1, 'JWT_PRIVATE_KEY is required'),
   JWT_PUBLIC_KEY: z.string().min(1, 'JWT_PUBLIC_KEY is required'),
+  JWT_KID: z.string().default('auth-service-key-v1'),
 });
 
 /**
@@ -74,7 +79,7 @@ const resolveKey = (value: string, envName: string): string => {
 const assertPEM = (value: string, envName: string, isPublic: boolean) => {
   const hasBegin = isPublic
     ? value.includes('BEGIN PUBLIC KEY')
-    : value.includes('BEGIN PRIVATE KEY');
+    : value.includes('BEGIN RSA PRIVATE KEY');
 
   if (!hasBegin) {
     throw new Error(
