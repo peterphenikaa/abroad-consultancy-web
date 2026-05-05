@@ -82,12 +82,6 @@ export class AuthService {
       throw new ApiError(403, errorMessage, 'ACCOUNT_INACTIVE');
     }
 
-    // 4. Generate Access Token
-    const accessToken = signAccessToken({
-      userId: user.id,
-      role: user.role,
-    });
-
     // 5. Generate Refresh Token and hash it before storing in database
     const rawRefreshToken = generateOpaqueToken();
     const hashedRefreshToken = hashOpaqueToken(rawRefreshToken);
@@ -102,7 +96,21 @@ export class AuthService {
     const ip = context.ip;
     const devicesInfo = context.userAgent || 'Unknown Device';
 
-    await SessionService.createSession(user.id, hashedRefreshToken, expiresAt, devicesInfo, ip);
+    const session = await SessionService.createSession(
+      user.id,
+      hashedRefreshToken,
+      expiresAt,
+      devicesInfo,
+      ip,
+    );
+
+    // 4. Generate Access Token
+    const accessToken = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: session.id,
+    });
 
     return {
       accessToken,
@@ -166,8 +174,10 @@ export class AuthService {
 
     // 7. Generate new Access Token
     const newAccessToken = signAccessToken({
-      userId: session.user.id,
+      sub: session.user.id,
+      email: session.user.email,
       role: session.user.role,
+      sessionId: session.id,
     });
 
     return {
