@@ -21,7 +21,10 @@ const envSchema = z.object({
 
   // Cookie config
   COOKIE_DOMAIN: z.string().default('localhost'),
-  COOKIE_SECURE: z.string().default('false').transform((val) => val === 'true'),
+  COOKIE_SECURE: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
 
   // JWT config
   JWT_PRIVATE_KEY: z.string().min(1, 'JWT_PRIVATE_KEY is required'),

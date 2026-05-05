@@ -122,30 +122,30 @@ export class AuthController {
   }
 
   /**
-    * API for user logout
-    */
-    static async logout(req: Request, res: Response, next: NextFunction) {
-      try {
-        // 1. take refresh token from cookie
-        const rawRefreshToken = req.cookies?.refresh_token;
+   * API for user logout
+   */
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      // 1. take refresh token from cookie
+      const rawRefreshToken = req.cookies?.refresh_token;
 
-        // 2. if refresh token exists, logout (idempotent - always returns 200 OK)
-        if (rawRefreshToken) {
-          await AuthService.logout(rawRefreshToken);
-        }
-
-        // 3. delete cookie in client
-        res.clearCookie('refresh_token', {
-          httpOnly: true,
-          secure: env.COOKIE_SECURE,
-          domain: env.COOKIE_DOMAIN,
-          sameSite: 'strict',
-        });
-
-        // 4. return res (always success - already logged out if no token)
-        res.status(200).json({ message: 'Logged out successfully' });
-      } catch (error) {
-        next(error);
+      // 2. if refresh token exists, logout (idempotent - always returns 200 OK)
+      if (rawRefreshToken) {
+        await AuthService.logout(rawRefreshToken);
       }
+
+      // 3. delete cookie in client
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: env.COOKIE_SECURE,
+        domain: env.COOKIE_DOMAIN,
+        sameSite: 'strict',
+      });
+
+      // 4. return res (always success - already logged out if no token)
+      res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      next(error);
     }
+  }
 }
