@@ -1,12 +1,26 @@
+@import "./styles/fonts.css";
+@import "./styles/theme.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-size: var(--font-size);
+  }
+
   body {
-    @apply bg-dark text-slate-100 font-sans antialiased min-h-screen;
-    background-image: radial-gradient(circle at top left, rgba(14, 165, 233, 0.05) 0%, transparent 25%),
-                      radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 25%);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: var(--font-weight-normal);
+    letter-spacing: -0.02em;
   }
 }
 
