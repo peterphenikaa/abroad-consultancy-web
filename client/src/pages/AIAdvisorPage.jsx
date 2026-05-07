@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Clock, Bookmark, Download, RotateCcw } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
 
-const Button = ({ children, className, ...props }) => <button className={className} {...props}>{children}</button>;
-const Badge = ({ children, className, ...props }) => <div className={className} {...props}>{children}</div>;
+const AI_RAG_API_BASE_URL = (
+  import.meta.env.VITE_AI_RAG_API_BASE_URL || 'http://localhost:3003'
+).replace(/\/$/, '');
 
 const suggestedQuestions = [
   'Which universities are best for Computer Science in the US?',
@@ -43,7 +47,7 @@ export default function AIAdvisorPage() {
     setIsTyping(true);
 
     try {
-      const response = await fetch('http://localhost:3003/api/chat', {
+      const response = await fetch(`${AI_RAG_API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +91,6 @@ export default function AIAdvisorPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50 flex flex-col">
       <div className="max-w-5xl mx-auto px-4 py-8 flex-1 w-full flex flex-col">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,27 +108,27 @@ export default function AIAdvisorPage() {
           </p>
         </motion.div>
 
-        {/* Chat Container */}
         <div className="bg-white flex-1 flex flex-col min-h-[500px] rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
-          {/* Chat History Toolbar */}
           <div className="border-b border-gray-200 px-6 py-4 bg-gray-50/70 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Button className="flex items-center gap-2 bg-transparent text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md">
+                <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-200">
                   <Clock className="w-4 h-4 text-gray-500" />
                   <span>History</span>
                 </Button>
-                <Button className="flex items-center gap-2 bg-transparent text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md">
+                <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-200">
                   <Bookmark className="w-4 h-4 text-gray-500" />
                   <span>Saved</span>
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button className="w-9 h-9 flex items-center justify-center bg-transparent hover:bg-gray-200 rounded-md" title="Download conversation">
+                <Button variant="ghost" size="icon" className="hover:bg-gray-200" title="Download conversation">
                   <Download className="w-4 h-4 text-gray-500" />
                 </Button>
                 <Button
-                  className="w-9 h-9 flex items-center justify-center bg-transparent hover:bg-gray-200 rounded-md"
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-gray-200"
                   onClick={() => setMessages(conversationHistory)}
                   title="New conversation"
                 >
@@ -135,7 +138,6 @@ export default function AIAdvisorPage() {
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             <AnimatePresence>
               {messages.map((message) => (
@@ -208,7 +210,6 @@ export default function AIAdvisorPage() {
             )}
           </div>
 
-          {/* Suggested Questions */}
           {messages.length === 1 && (
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50 shrink-0">
               <p className="text-sm font-medium text-gray-500 mb-3">Suggested questions:</p>
@@ -216,8 +217,10 @@ export default function AIAdvisorPage() {
                 {suggestedQuestions.map((question, index) => (
                   <motion.div key={index} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="rounded-full bg-white border border-gray-300 text-gray-700 px-3 py-1 text-sm hover:bg-gray-100"
+                      className="rounded-full bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
                     >
                       {question}
                     </Button>
@@ -227,16 +230,14 @@ export default function AIAdvisorPage() {
             </div>
           )}
 
-          {/* Input Area */}
           <div className="border-t border-gray-200 p-6 bg-white shrink-0">
             <div className="flex gap-3">
-              <input
-                type="text"
+              <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask me anything about studying abroad..."
-                className="flex-1 px-5 py-3 rounded-xl bg-gray-100 border border-transparent focus:border-amber-500 focus:outline-none transition-colors text-gray-800"
+                className="flex-1"
               />
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
