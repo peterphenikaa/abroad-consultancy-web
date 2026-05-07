@@ -51,7 +51,7 @@ app.post("/api/sync-rag", async (req, res) => {
 
       const embeddingModel = genAI.getGenerativeModel({
         model: "gemini-embedding-001",
-      }); 
+      });
 
       const result = await genAI
         .getGenerativeModel({ model: "text-embedding-004" })
@@ -87,12 +87,12 @@ app.post("/api/sync-rag", async (req, res) => {
       }
 
       if (vectorValues.length > 768) {
-        vectorValues = vectorValues.slice(0, 768); 
+        vectorValues = vectorValues.slice(0, 768);
       }
 
       vectors.push({
         id: "uni_" + uni.id,
-        values: vectorValues, 
+        values: vectorValues,
         metadata: {
           type: "university",
           title: uni.universityName,
@@ -102,7 +102,7 @@ app.post("/api/sync-rag", async (req, res) => {
       });
 
       console.log("✅ Đã Embedding xong trường: " + uni.universityName);
-      await delay(2000); 
+      await delay(2000);
     }
 
     if (vectors.length > 0) {
@@ -163,7 +163,7 @@ app.post("/api/chat", async (req, res) => {
 
     const searchRes = await pineconeIndex.query({
       vector: qEmbedVals,
-      topK: 3, 
+      topK: 3,
       includeMetadata: true,
     });
 
@@ -176,8 +176,42 @@ app.post("/api/chat", async (req, res) => {
       " ]. Hãy trả lời câu hỏi của học sinh: " +
       question;
 
-    const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const finalAnswer = await chatModel.generateContent(sysPrompt);
+    const chatModelCandidates = [
+      { model: "gemini-2.5-flash", apiVersion: "v1beta" },
+      { model: "gemini-2.0-flash", apiVersion: "v1beta" },
+      { model: "gemini-1.5-flash", apiVersion: "v1" },
+    ];
+
+    let finalAnswer = null;
+    let lastChatError = null;
+
+    for (const candidate of chatModelCandidates) {
+      try {
+        const chatModel = genAI.getGenerativeModel(
+          { model: candidate.model },
+          { apiVersion: candidate.apiVersion },
+        );
+        finalAnswer = await chatModel.generateContent(sysPrompt);
+        lastChatError = null;
+        break;
+      } catch (chatError) {
+        lastChatError = chatError;
+        console.warn(
+          "⚠️ Chat model failed:",
+          candidate.model,
+          chatError.message,
+        );
+      }
+    }
+
+    if (!finalAnswer) {
+      return res.json({
+        ai_answer:
+          "Hiện tại hệ thống AI đang quá tải hoặc quota của model Gemini đã hết. Bạn hãy thử lại sau vài phút, hoặc dùng API key / project khác có quota hợp lệ.",
+        reference_sources: searchRes.matches.map((m) => m.metadata.title),
+        ai_error: lastChatError?.message || "Gemini model unavailable",
+      });
+    }
 
     res.json({
       ai_answer: finalAnswer.response.text(),
