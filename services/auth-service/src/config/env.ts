@@ -30,6 +30,14 @@ const envSchema = z.object({
   JWT_PRIVATE_KEY: z.string().min(1, 'JWT_PRIVATE_KEY is required'),
   JWT_PUBLIC_KEY: z.string().min(1, 'JWT_PUBLIC_KEY is required'),
   JWT_KID: z.string().default('auth-service-key-v1'),
+
+  // Email (SMTP) config
+  // THÊM MỚI TỪ ĐÂY: Email (SMTP) config
+  SMTP_HOST: z.string().min(1, 'SMTP_HOST is required'),
+  SMTP_PORT: z.string().transform(Number).default(587),
+  SMTP_USER: z.string().min(1, 'SMTP_USER is required'),
+  SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
+  EMAIL_FROM: z.string().default('Cambridge Platform <noreply@cambridge-platform.com>'),
 });
 
 /**
