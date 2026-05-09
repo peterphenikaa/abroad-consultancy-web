@@ -40,13 +40,13 @@ export class AuthService {
     const newUser = await prisma.user.create({
       data: {
         email: email,
-        password_hash: hashedPassword,
-        full_name: fullName,
+        passwordHash: hashedPassword,
+        fullName: fullName,
       },
     });
 
     // 5. Remove sensitive information before returning the user object
-    const { password_hash, ...userWithoutPassword } = newUser;
+    const { passwordHash, ...userWithoutPassword } = newUser;
 
     return userWithoutPassword;
   }
@@ -69,7 +69,7 @@ export class AuthService {
     }
 
     // 3. Password verification
-    const isPasswordValid = await verifyPassword(password, user.password_hash);
+    const isPasswordValid = await verifyPassword(password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
@@ -166,7 +166,7 @@ export class AuthService {
 
     // 6.4: Send old refresh token to blacklist (store in Redis with expiration) to prevent reuse
     const remainingTtlSeconds = Math.floor(
-      (session.expires_at.getTime() - new Date().getTime()) / 1000,
+      (session.expiresAt.getTime() - new Date().getTime()) / 1000,
     );
     if (remainingTtlSeconds > 0) {
       await SessionService.blacklistToken(hashedRefreshToken, remainingTtlSeconds);
@@ -195,7 +195,7 @@ export class AuthService {
    * Lougout logic: Invalidates the refresh token, effectively logging the user out and preventing further use of that token.
    */
   static async logout(rawRefreshToken: string) {
-    // 2. session check and revoke session in database (set revoked_at)
+    // 2. session check and revoke session in database (set revokedAt)
     const hashedRefreshToken = hashOpaqueToken(rawRefreshToken);
     if (!hashedRefreshToken) {
       logger.warn('Logout attempt with invalid refresh token format');
@@ -217,7 +217,7 @@ export class AuthService {
 
       // send old refresh token to blacklist (store in Redis with expiration) to prevent reuse until it expires
       const remainingTtlSeconds = Math.floor(
-        (session.expires_at.getTime() - new Date().getTime()) / 1000,
+        (session.expiresAt.getTime() - new Date().getTime()) / 1000,
       );
       if (remainingTtlSeconds > 0) {
         await SessionService.blacklistToken(hashedRefreshToken, remainingTtlSeconds);

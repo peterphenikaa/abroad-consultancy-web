@@ -25,53 +25,53 @@ enum Status {
 model User {
   id              String  @id @default(uuid()) @db.Uuid
   email           String  @unique @db.VarChar(255)
-  phone_hash      String? @db.VarChar(255)
-  password_hash   String  @db.VarChar(255)
-  full_name       String? @db.VarChar(255)
+  phoneHash       String? @map("phone_hash") @db.VarChar(255)
+  passwordHash    String  @map("password_hash") @db.VarChar(255)
+  fullName        String? @map("full_name") @db.VarChar(255)
   role            Role    @default(STUDENT)
   status          Status  @default(ACTIVE)
-  subscription_id String? @db.VarChar(100)
-  org_id          String? @db.VarChar(100)
+  subscriptionId  String? @map("subscription_id") @db.VarChar(100)
+  orgId           String? @map("org_id") @db.VarChar(100)
 
   // Verification feature
-  email_verified    Boolean   @default(false)
-  email_verified_at DateTime?
-  phone_verified    Boolean   @default(false)
+  emailVerified   Boolean   @map("email_verified") @default(false)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phoneVerified   Boolean   @map("phone_verified") @default(false)
 
   // Timestamps
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? // Phục vụ tính năng Soft Delete
+  createdAt DateTime  @map("created_at") @default(now())
+  updatedAt DateTime  @map("updated_at") @updatedAt
+  deletedAt DateTime? @map("deleted_at") // Phục vụ tính năng Soft Delete
 
   // Relationships
   sessions      UserSession[]
   userProfileId String?       @db.Uuid
   userProfile   UserProfile?
 
-  @@index([email_verified])
+  @@index([emailVerified])
   @@index([email]) // Tối ưu hóa khi tìm kiếm user lúc đăng nhập
   @@map("users")
 }
 
 model UserSession {
   id                 String    @id @default(uuid()) @db.Uuid
-  user_id            String    @db.Uuid
-  device_info        String?   @db.Text
+  userId             String    @map("user_id") @db.Uuid
+  deviceInfo         String?   @map("device_info") @db.Text
   ip                 String?   @db.VarChar(45)
-  refresh_token_hash String?   @db.VarChar(255)
-  revoked_at         DateTime? @db.Timestamp(6)
-  last_used_at       DateTime? @db.Timestamp(6)
+  refreshTokenHash   String?   @map("refresh_token_hash") @db.VarChar(255)
+  revokedAt          DateTime? @map("revoked_at") @db.Timestamp(6)
+  lastUsedAt         DateTime? @map("last_used_at") @db.Timestamp(6)
 
   // Timestamps
-  created_at DateTime @default(now())
-  expires_at DateTime
+  createdAt DateTime @map("created_at") @default(now())
+  expiresAt DateTime @map("expires_at")
 
   // Relationships
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
-  @@index([expires_at]) // Tối ưu hóa cho job dọn dẹp session hết hạn
-  @@index([refresh_token_hash]) // Tối ưu hóa cho lookup refresh token và revocation check
+  @@index([userId])
+  @@index([expiresAt]) // Tối ưu hóa cho job dọn dẹp session hết hạn
+  @@index([refreshTokenHash]) // Tối ưu hóa cho lookup refresh token và revocation check
   @@map("user_sessions")
 }
 
@@ -82,13 +82,13 @@ model UserProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   bio               String? @db.Text
-  avatar_url        String? @db.VarChar(500)
-  educational_level String? @db.VarChar(100)
-  learning_goals    String  @db.Text
+  avatarUrl         String? @map("avatar_url") @db.VarChar(500)
+  educationalLevel  String? @map("educational_level") @db.VarChar(100)
+  learningGoals     String  @map("learning_goals") @db.Text
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
 
-  @@index([created_at])
+  @@index([createdAt])
   @@map("user_profiles")
 }

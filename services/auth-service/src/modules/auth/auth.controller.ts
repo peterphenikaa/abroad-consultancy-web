@@ -31,7 +31,7 @@ export class AuthController {
         user: {
           id: newUser.id,
           email: newUser.email,
-          fullName: newUser.full_name,
+          fullName: newUser.fullName,
         },
       });
     } catch (error) {

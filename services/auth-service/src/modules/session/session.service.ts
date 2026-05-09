@@ -14,10 +14,10 @@ export class SessionService {
   ) {
     return prismaClient.userSession.create({
       data: {
-        user_id: userId,
-        refresh_token_hash: refreshTokenHash,
-        expires_at: expiresAt,
-        device_info: devicesInfo,
+        userId: userId,
+        refreshTokenHash: refreshTokenHash,
+        expiresAt: expiresAt,
+        deviceInfo: devicesInfo,
         ip: ip,
       },
     });
@@ -30,9 +30,9 @@ export class SessionService {
   static async findValidSessionByHash(refreshTokenHash: string) {
     return prismaClient.userSession.findFirst({
       where: {
-        refresh_token_hash: refreshTokenHash,
-        revoked_at: null,
-        expires_at: {
+        refreshTokenHash: refreshTokenHash,
+        revokedAt: null,
+        expiresAt: {
           gt: new Date(), // Ensure session is still valid
         },
       },
@@ -51,9 +51,9 @@ export class SessionService {
     return prismaClient.userSession.update({
       where: { id: sessionId },
       data: {
-        refresh_token_hash: newRefreshTokenHash,
-        last_used_at: new Date(), // Update last used timestamp
-        expires_at: newExpiresAt, // Extend session validity
+        refreshTokenHash: newRefreshTokenHash,
+        lastUsedAt: new Date(), // Update last used timestamp
+        expiresAt: newExpiresAt, // Extend session validity
       },
     });
   }
@@ -65,7 +65,7 @@ export class SessionService {
     return prismaClient.userSession.update({
       where: { id: sessionId },
       data: {
-        revoked_at: new Date(), // Mark session as revoked
+        revokedAt: new Date(), // Mark session as revoked
       },
     });
   }
