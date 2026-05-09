@@ -17,11 +17,11 @@
 
 🟡 EMAIL INTEGRATION (Days 3-4)
 
-- [ ] [EMAIL-1]: Thiết lập src/services/emailService.ts với Nodemailer (SMTP wrapper)
-- [ ] [EMAIL-2]: Tạo template otpTemplate.html
-- [ ] [EMAIL-3]: Tạo template passwordResetTemplate.html
-- [ ] [EMAIL-4]: Tạo template welcomeTemplate.html
-- [ ] [EMAIL-6]: Cấu hình biến môi trường SMTP trong .env
+- [x] [EMAIL-1]: Thiết lập src/services/emailService.ts với Nodemailer (SMTP wrapper)
+- [x] [EMAIL-2]: Tạo template otpTemplate.html
+- [x] [EMAIL-3]: Tạo template passwordResetTemplate.html
+- [x] [EMAIL-4]: Tạo template welcomeTemplate.html
+- [x] [EMAIL-6]: Cấu hình biến môi trường SMTP trong .env
 
 🟢 EMAIL VERIFICATION ENDPOINTS (Days 5-6)
 
