@@ -10,10 +10,10 @@
 
 🔴 CRITICAL PATH: OTP System (Days 1-3)
 
-- [ ] [OTP-1]: Tạo src/constants/otpTypes.ts (định nghĩa các loại OTP)
-- [ ] [OTP-2]: Tạo src/utils/otpGenerator.ts (logic tạo mã OTP random, check format)
-- [ ] [OTP-3]: Tạo src/services/otpService.ts (lưu Redis, validate, giới hạn rate limit 5 lần/5 phút)
-- [ ] [OTP-4]: Viết unit test cho OTP
+- [x] [OTP-1]: Tạo src/constants/otpTypes.ts (định nghĩa các loại OTP)
+- [x] [OTP-2]: Tạo src/utils/otpGenerator.ts (logic tạo mã OTP random, check format)
+- [x] [OTP-3]: Tạo src/services/otpService.ts (lưu Redis, validate, giới hạn rate limit 5 lần/5 phút)
+- [x] [OTP-4]: Viết unit test cho OTP
 
 🟡 EMAIL INTEGRATION (Days 3-4)
 
