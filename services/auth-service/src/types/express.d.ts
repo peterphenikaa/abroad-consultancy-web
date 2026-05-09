@@ -1,4 +1,4 @@
-import { Role } from '../constants/roles';
+import { Role } from '@prisma/client';
 
 export interface AuthUser {
   userId: string;
