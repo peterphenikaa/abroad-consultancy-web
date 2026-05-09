@@ -33,14 +33,22 @@ model User {
   subscription_id String? @db.VarChar(100)
   org_id          String? @db.VarChar(100)
 
+  // Verification feature
+  email_verified    Boolean   @default(false)
+  email_verified_at DateTime?
+  phone_verified    Boolean   @default(false)
+
   // Timestamps
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime? // Phục vụ tính năng Soft Delete
 
   // Relationships
-  sessions UserSession[]
+  sessions      UserSession[]
+  userProfileId String?       @db.Uuid
+  userProfile   UserProfile?
 
+  @@index([email_verified])
   @@index([email]) // Tối ưu hóa khi tìm kiếm user lúc đăng nhập
   @@map("users")
 }
@@ -65,4 +73,22 @@ model UserSession {
   @@index([expires_at]) // Tối ưu hóa cho job dọn dẹp session hết hạn
   @@index([refresh_token_hash]) // Tối ưu hóa cho lookup refresh token và revocation check
   @@map("user_sessions")
+}
+
+model UserProfile {
+  id String @id @default(cuid()) @db.VarChar(25)
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio               String? @db.Text
+  avatar_url        String? @db.VarChar(500)
+  educational_level String? @db.VarChar(100)
+  learning_goals    String  @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([created_at])
+  @@map("user_profiles")
 }
