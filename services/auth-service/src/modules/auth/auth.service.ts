@@ -1,5 +1,6 @@
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
+import { OtpType } from '../../constants/otpTypes';
 import { prisma } from '../../lib/prisma';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
@@ -10,6 +11,9 @@ import {
   verifyPassword,
 } from '../../utils/crypto.util';
 import { signAccessToken } from '../../utils/jwt.util';
+import { OtpGenerator } from '../../utils/otpGenerator';
+import { emailService } from '../email/email.service';
+import { OtpService } from '../otp/otp.service';
 import { SessionService } from '../session/session.service';
 import { STATUS_ERROR } from './auth.constant';
 import { LoginDTO, RegisterDTO } from './auth.scheme';
@@ -17,6 +21,7 @@ import { LoginDTO, RegisterDTO } from './auth.scheme';
 export class AuthService {
   /**
    * Register logic: Validates user input, creates a new user in the database, and returns a success message or error if registration fails.
+   * @param payload - The registration data transfer object containing user input for registration.
    */
   static async register(payload: RegisterDTO) {
     // if validation passes, extract the validated data
@@ -42,8 +47,23 @@ export class AuthService {
         email: email,
         passwordHash: hashedPassword,
         fullName: fullName,
+        userProfile: {
+          create: {},
+        },
       },
     });
+
+    // OTP generates
+    const otp = OtpGenerator.generateOTP(6);
+
+    // Store OTP in Redis
+    await OtpService.saveOTP(newUser.email, OtpType.EMAIL_VERIFY, otp);
+
+    // Send Email
+    // dont use await avoid blocking api res for user
+    emailService
+      .sendEmailVerificationOTP(newUser.email, otp, newUser.fullName || 'Student')
+      .catch((err) => logger.error(`Failed to send OTP email to ${newUser.email}`, err));
 
     // 5. Remove sensitive information before returning the user object
     const { passwordHash, ...userWithoutPassword } = newUser;

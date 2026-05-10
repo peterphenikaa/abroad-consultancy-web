@@ -27,11 +27,12 @@ export class AuthController {
       // 6. Return success response or error
       logger.info(`User registered successfully: ${newUser.email}`);
       res.status(201).json({
-        message: 'User registered successfully',
+        message: 'User registered successfully! Please checks your email to verify your account',
         user: {
           id: newUser.id,
           email: newUser.email,
           fullName: newUser.fullName,
+          emailVerified: newUser.emailVerified,
         },
       });
     } catch (error) {
