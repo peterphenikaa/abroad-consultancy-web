@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
@@ -57,6 +57,7 @@ const authenticateJWT = (req, res, next) => {
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/refresh",
+    "/api/ai/chat",
     "/health",
   ]);
 
@@ -67,8 +68,6 @@ const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
-
-    // Support both HS256 (JWT_SECRET) and RS256 (JWT_PUBLIC_KEY)
     const verifyOptions = process.env.JWT_PUBLIC_KEY
       ? { algorithms: ["RS256"] }
       : {};
@@ -95,32 +94,58 @@ const authenticateJWT = (req, res, next) => {
 app.use(authenticateJWT);
 
 const routes = {
-  "/api/auth": process.env.AUTH_SERVICE_URL || "http://auth-service:3001",
-  "/api/users": process.env.USER_SERVICE_URL || "http://user-service:3002",
-  "/api/ai": process.env.AI_SERVICE_URL || "http://ai-rag-service:3003",
-  "/api/content":
-    process.env.CONTENT_SERVICE_URL || "http://content-service:3004",
-  "/api/exams": process.env.EXAM_SERVICE_URL || "http://exam-service:3005",
-  "/api/quizzes": process.env.QUIZ_SERVICE_URL || "http://quiz-service:3006",
-  "/api/search": process.env.SEARCH_SERVICE_URL || "http://search-service:3007",
-  "/api/payments":
-    process.env.PAYMENT_SERVICE_URL || "http://payment-service:3008",
-  "/api/notifications":
-    process.env.NOTIFICATION_SERVICE_URL || "http://notification-service:3009",
-  "/api/analytics":
-    process.env.ANALYTICS_SERVICE_URL || "http://analytics-service:3010",
+  "/api/auth": {
+    target: process.env.AUTH_SERVICE_URL || "http://auth-service:3001",
+    servicePrefix: "/api/auth",
+  },
+  "/api/users": {
+    target: process.env.USER_SERVICE_URL || "http://user-service:3002",
+    servicePrefix: "/api/users",
+  },
+  "/api/ai": {
+    target: process.env.AI_SERVICE_URL || "http://ai-rag-service:3003",
+    servicePrefix: "/api",          
+  },
+  "/api/content": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3004",
+    servicePrefix: "/api/content",
+  },
+  "/api/exams": {
+    target: process.env.EXAM_SERVICE_URL || "http://exam-service:3005",
+    servicePrefix: "/api/exams",
+  },
+  "/api/quizzes": {
+    target: process.env.QUIZ_SERVICE_URL || "http://quiz-service:3006",
+    servicePrefix: "/api/quizzes",
+  },
+  "/api/search": {
+    target: process.env.SEARCH_SERVICE_URL || "http://search-service:3007",
+    servicePrefix: "/api/search",
+  },
+  "/api/payments": {
+    target: process.env.PAYMENT_SERVICE_URL || "http://payment-service:3008",
+    servicePrefix: "/api/payments",
+  },
+  "/api/notifications": {
+    target: process.env.NOTIFICATION_SERVICE_URL || "http://notification-service:3009",
+    servicePrefix: "/api/notifications",
+  },
+  "/api/analytics": {
+    target: process.env.ANALYTICS_SERVICE_URL || "http://analytics-service:3010",
+    servicePrefix: "/api/analytics",
+  },
 };
 
-for (const [path, target] of Object.entries(routes)) {
+for (const [gatewayPrefix, { target, servicePrefix }] of Object.entries(routes)) {
   app.use(
-    path,
     createProxyMiddleware({
       target,
       changeOrigin: true,
-      proxyTimeout: 5000,
-      timeout: 5000,
+      pathFilter: gatewayPrefix,
+      proxyTimeout: 60000,
+      timeout: 60000,
       pathRewrite: {
-        [`^${path}`]: "",
+        [`^${gatewayPrefix}`]: servicePrefix, 
       },
       onProxyReq: (proxyReq, req) => {
         if (req.headers["x-user-id"]) {

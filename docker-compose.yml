@@ -146,6 +146,9 @@ services:
     env_file: .env
     ports:
       - "80:80"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     networks:
       - app-network
 
