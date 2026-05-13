@@ -44,9 +44,8 @@ model User {
   deletedAt DateTime? @map("deleted_at") // Phục vụ tính năng Soft Delete
 
   // Relationships
-  sessions      UserSession[]
-  userProfileId String?       @db.Uuid
-  userProfile   UserProfile?
+  sessions    UserSession[]
+  userProfile UserProfile?
 
   @@index([emailVerified])
   @@index([email]) // Tối ưu hóa khi tìm kiếm user lúc đăng nhập
@@ -78,7 +77,7 @@ model UserSession {
 model UserProfile {
   id String @id @default(cuid()) @db.VarChar(25)
 
-  userId String @unique @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   bio              String? @db.Text
