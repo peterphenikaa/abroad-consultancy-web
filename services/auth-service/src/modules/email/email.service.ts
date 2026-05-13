@@ -97,6 +97,26 @@ class EmailService {
     await this.transporter.sendMail(mailOptions);
     logger.info(`Password reset email sent to ${to}`);
   }
+
+  /**
+   * Send Wellcome email after successful registration
+   * @param to - Recipient email address
+   * @param userName - Recipient's name to personalize the email
+   * @returns A promise that resolves when the email is sent successfully, or rejects with an error
+   */
+  async sendWelcomeEmail(to: string, userName: string = 'Student'): Promise<void> {
+    const html = this.getTemplate('welcomeTemplate', { userName });
+
+    const mailOptions = {
+      from: env.EMAIL_FROM,
+      to,
+      subject: 'Welcome to Cambridge Platform!',
+      html,
+    };
+
+    await this.transporter.sendMail(mailOptions);
+    logger.info(`Welcome email sent to ${to}`);
+  }
 }
 
 export const emailService = new EmailService();

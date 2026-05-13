@@ -1,7 +1,7 @@
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import { OtpType } from '../../constants/otpTypes';
-import { prisma } from '../../lib/prisma';
+import { prisma, prismaClient } from '../../lib/prisma';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
 import {
@@ -16,7 +16,7 @@ import { emailService } from '../email/email.service';
 import { OtpService } from '../otp/otp.service';
 import { SessionService } from '../session/session.service';
 import { STATUS_ERROR } from './auth.constant';
-import { LoginDTO, RegisterDTO } from './auth.scheme';
+import { LoginDTO, RegisterDTO, VerifyEmailDTO } from './auth.scheme';
 
 export class AuthService {
   /**
@@ -243,5 +243,46 @@ export class AuthService {
         await SessionService.blacklistToken(hashedRefreshToken, remainingTtlSeconds);
       }
     }
+  }
+  /**
+   * Verify email
+   */
+  static async verifyEmail(payload: VerifyEmailDTO) {
+    const { email, otp } = payload;
+
+    // 1. find user in db
+    const user = await prismaClient.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+    }
+
+    // 2. threw error if email already verified
+    if (user.emailVerified) {
+      throw new ApiError(400, 'Email already verified', 'EMAIL_ALREADY_VERIFIED');
+    }
+
+    // 3. Verify OTP
+    await OtpService.validateOTP(email, OtpType.EMAIL_VERIFY, otp);
+
+    // 4. Update emailVerified in db
+    await prismaClient.user.update({
+      where: { email },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    // 5. Send Welcome email
+    emailService
+      .sendWelcomeEmail(email, user.fullName || 'Student')
+      .catch((err) => logger.error(`Failed to send welcome email to ${email}: ${err.message}`));
+
+    return { message: 'Email verified successfully' };
   }
 }

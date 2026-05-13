@@ -2,7 +2,7 @@ import z from 'zod';
 import { logger } from '../../config/logger';
 import { NextFunction, Request, Response } from 'express';
 import { env } from '../../config/env';
-import { loginSchema, registerSchema } from './auth.scheme';
+import { loginSchema, registerSchema, verifyEmailSchema } from './auth.scheme';
 import { AuthService } from './auth.service';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
@@ -145,6 +145,28 @@ export class AuthController {
 
       // 4. return res (always success - already logged out if no token)
       res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Verify email with OTP
+   */
+  static async verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // 1. Validate request body using Zod
+      const parseResult = verifyEmailSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Email Verification Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      // 2. Call service to verify email
+      const result = await AuthService.verifyEmail(parseResult.data);
+
+      // 3. Return success response or error
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }
