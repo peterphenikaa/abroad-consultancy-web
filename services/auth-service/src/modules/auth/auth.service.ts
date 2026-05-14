@@ -1,6 +1,7 @@
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
-import { prisma } from '../../lib/prisma';
+import { OtpType } from '../../constants/otpTypes';
+import { prisma, prismaClient } from '../../lib/prisma';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
 import {
@@ -10,13 +11,17 @@ import {
   verifyPassword,
 } from '../../utils/crypto.util';
 import { signAccessToken } from '../../utils/jwt.util';
+import { OtpGenerator } from '../../utils/otpGenerator';
+import { emailService } from '../email/email.service';
+import { OtpService } from '../otp/otp.service';
 import { SessionService } from '../session/session.service';
 import { STATUS_ERROR } from './auth.constant';
-import { LoginDTO, RegisterDTO } from './auth.scheme';
+import { LoginDTO, RegisterDTO, VerifyEmailDTO } from './auth.scheme';
 
 export class AuthService {
   /**
    * Register logic: Validates user input, creates a new user in the database, and returns a success message or error if registration fails.
+   * @param payload - The registration data transfer object containing user input for registration.
    */
   static async register(payload: RegisterDTO) {
     // if validation passes, extract the validated data
@@ -40,13 +45,28 @@ export class AuthService {
     const newUser = await prisma.user.create({
       data: {
         email: email,
-        password_hash: hashedPassword,
-        full_name: fullName,
+        passwordHash: hashedPassword,
+        fullName: fullName,
+        userProfile: {
+          create: {},
+        },
       },
     });
 
+    // OTP generates
+    const otp = OtpGenerator.generateOTP(6);
+
+    // Store OTP in Redis
+    await OtpService.saveOTP(newUser.email, OtpType.EMAIL_VERIFY, otp);
+
+    // Send Email
+    // dont use await avoid blocking api res for user
+    emailService
+      .sendEmailVerificationOTP(newUser.email, otp, newUser.fullName || 'Student')
+      .catch((err) => logger.error(`Failed to send OTP email to ${newUser.email}`, err));
+
     // 5. Remove sensitive information before returning the user object
-    const { password_hash, ...userWithoutPassword } = newUser;
+    const { passwordHash, ...userWithoutPassword } = newUser;
 
     return userWithoutPassword;
   }
@@ -69,7 +89,7 @@ export class AuthService {
     }
 
     // 3. Password verification
-    const isPasswordValid = await verifyPassword(password, user.password_hash);
+    const isPasswordValid = await verifyPassword(password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
@@ -81,12 +101,6 @@ export class AuthService {
         STATUS_ERROR[user.status] || 'Account is not active. Please contact support.';
       throw new ApiError(403, errorMessage, 'ACCOUNT_INACTIVE');
     }
-
-    // 4. Generate Access Token
-    const accessToken = signAccessToken({
-      userId: user.id,
-      role: user.role,
-    });
 
     // 5. Generate Refresh Token and hash it before storing in database
     const rawRefreshToken = generateOpaqueToken();
@@ -102,7 +116,21 @@ export class AuthService {
     const ip = context.ip;
     const devicesInfo = context.userAgent || 'Unknown Device';
 
-    await SessionService.createSession(user.id, hashedRefreshToken, expiresAt, devicesInfo, ip);
+    const session = await SessionService.createSession(
+      user.id,
+      hashedRefreshToken,
+      expiresAt,
+      devicesInfo,
+      ip,
+    );
+
+    // 4. Generate Access Token
+    const accessToken = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: session.id,
+    });
 
     return {
       accessToken,
@@ -158,7 +186,7 @@ export class AuthService {
 
     // 6.4: Send old refresh token to blacklist (store in Redis with expiration) to prevent reuse
     const remainingTtlSeconds = Math.floor(
-      (session.expires_at.getTime() - new Date().getTime()) / 1000,
+      (session.expiresAt.getTime() - new Date().getTime()) / 1000,
     );
     if (remainingTtlSeconds > 0) {
       await SessionService.blacklistToken(hashedRefreshToken, remainingTtlSeconds);
@@ -166,8 +194,10 @@ export class AuthService {
 
     // 7. Generate new Access Token
     const newAccessToken = signAccessToken({
-      userId: session.user.id,
+      sub: session.user.id,
+      email: session.user.email,
       role: session.user.role,
+      sessionId: session.id,
     });
 
     return {
@@ -185,7 +215,7 @@ export class AuthService {
    * Lougout logic: Invalidates the refresh token, effectively logging the user out and preventing further use of that token.
    */
   static async logout(rawRefreshToken: string) {
-    // 2. session check and revoke session in database (set revoked_at)
+    // 2. session check and revoke session in database (set revokedAt)
     const hashedRefreshToken = hashOpaqueToken(rawRefreshToken);
     if (!hashedRefreshToken) {
       logger.warn('Logout attempt with invalid refresh token format');
@@ -207,11 +237,52 @@ export class AuthService {
 
       // send old refresh token to blacklist (store in Redis with expiration) to prevent reuse until it expires
       const remainingTtlSeconds = Math.floor(
-        (session.expires_at.getTime() - new Date().getTime()) / 1000,
+        (session.expiresAt.getTime() - new Date().getTime()) / 1000,
       );
       if (remainingTtlSeconds > 0) {
         await SessionService.blacklistToken(hashedRefreshToken, remainingTtlSeconds);
       }
     }
+  }
+  /**
+   * Verify email
+   */
+  static async verifyEmail(payload: VerifyEmailDTO) {
+    const { email, otp } = payload;
+
+    // 1. find user in db
+    const user = await prismaClient.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+    }
+
+    // 2. threw error if email already verified
+    if (user.emailVerified) {
+      throw new ApiError(400, 'Email already verified', 'EMAIL_ALREADY_VERIFIED');
+    }
+
+    // 3. Verify OTP
+    await OtpService.validateOTP(email, OtpType.EMAIL_VERIFY, otp);
+
+    // 4. Update emailVerified in db
+    await prismaClient.user.update({
+      where: { email },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    // 5. Send Welcome email
+    emailService
+      .sendWelcomeEmail(email, user.fullName || 'Student')
+      .catch((err) => logger.error(`Failed to send welcome email to ${email}: ${err.message}`));
+
+    return { message: 'Email verified successfully' };
   }
 }
