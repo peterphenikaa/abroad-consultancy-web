@@ -2,6 +2,8 @@
 # this for
 services:
   auth-service:
+    ports:
+      - '5555:5555'
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
