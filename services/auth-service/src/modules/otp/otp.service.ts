@@ -1,5 +1,5 @@
 import { logger } from '../../config/logger';
-import { OTP_TTL, OtpType } from '../../constants/otpTypes';
+import { OTP_TTL, OtpType } from './otp.constants';
 import { redisClient } from '../../lib/redis';
 import { ApiError } from '../../utils/api-error.util';
 
