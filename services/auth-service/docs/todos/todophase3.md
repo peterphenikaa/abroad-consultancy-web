@@ -25,10 +25,10 @@
 
 🟢 EMAIL VERIFICATION ENDPOINTS (Days 5-6)
 
-- [ ] [AUTH-1]: Sửa endpoint Đăng ký (POST /auth/register): Gửi OTP, set email_verified = false
-- [ ] [AUTH-2]: Tạo endpoint POST /auth/verify-email: Nhận OTP, check Redis, set email_verified = true
-- [ ] [AUTH-3]: Tạo middleware checkEmailVerified.ts
-- [ ] [AUTH-4]: Viết integration test luồng verify email
+- [x] [AUTH-1]: Sửa endpoint Đăng ký (POST /auth/register): Gửi OTP, set email_verified = false
+- [x] [AUTH-2]: Tạo endpoint POST /auth/verify-email: Nhận OTP, check Redis, set email_verified = true
+- [x] [AUTH-3]: Tạo middleware checkEmailVerified.ts
+- [x] [AUTH-4]: Viết integration test luồng verify email
 
 🔵 PASSWORD RESET FLOW (Days 6-7)
 
