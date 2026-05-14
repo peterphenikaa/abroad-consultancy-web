@@ -1,6 +1,6 @@
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
-import { OtpType } from '../../constants/otpTypes';
+import { OtpType } from '../otp/otp.constants';
 import { prisma, prismaClient } from '../../lib/prisma';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
