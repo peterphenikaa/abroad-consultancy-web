@@ -5,4 +5,9 @@ services:
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
-    command: sh -c "npx prisma db push && npm run dev"
+    command: >
+      sh -c "
+        npx prisma generate &&
+        npx prisma db push &&
+        npm run dev
+      "
