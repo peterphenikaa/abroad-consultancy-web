@@ -145,7 +145,7 @@ services:
       context: ./client
     env_file: .env
     ports:
-      - "80:80"
+      - "81:80"
     volumes:
       - ./client:/app
       - /app/node_modules

@@ -61,7 +61,7 @@ const authenticateJWT = (req, res, next) => {
     "/health",
   ]);
 
-  if (publicRoutes.has(req.path)) {
+  if (publicRoutes.has(req.path) || req.path.startsWith("/api/v1/")) {
     return next();
   }
 
@@ -107,8 +107,24 @@ const routes = {
     servicePrefix: "/api",          
   },
   "/api/content": {
-    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3004",
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
     servicePrefix: "/api/content",
+  },
+  "/api/v1/courses": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/courses",
+  },
+  "/api/v1/lessons": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/lessons",
+  },
+  "/api/v1/modules": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/modules",
+  },
+  "/api/v1/contents": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/contents",
   },
   "/api/exams": {
     target: process.env.EXAM_SERVICE_URL || "http://exam-service:3005",
