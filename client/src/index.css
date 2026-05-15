@@ -1,9 +1,7 @@
+@import "tailwindcss";
 @import "./styles/fonts.css";
 @import "./styles/theme.css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../tailwind.config.js";
 
 @layer base {
   html {
@@ -28,11 +26,11 @@
   .btn-primary {
     @apply bg-gradient-to-br from-primary to-primary-dark text-white font-semibold py-3 px-6 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  
+
   .glass-card {
     @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl transition-all hover:border-primary/30;
   }
-  
+
   .input-field {
     @apply bg-slate-900/60 border border-slate-700 rounded-lg py-3 px-4 text-white w-full focus:outline-none focus:border-primary transition-colors;
   }
@@ -44,4 +42,21 @@
 
 .blob {
   @apply absolute w-[500px] h-[500px] -z-10 rounded-full blur-[80px] opacity-20 pointer-events-none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-amber);
 }
