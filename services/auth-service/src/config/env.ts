@@ -18,6 +18,7 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.string().transform(Number).default(12),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL_DAYS: z.string().transform(Number).default(30),
+  RESET_PASSWORD_TOKEN_TTL_MINUTES: z.string().transform(Number).default(5),
 
   // Cookie config
   COOKIE_DOMAIN: z.string().default('localhost'),
