@@ -7,6 +7,10 @@ const { rateLimit } = require("express-rate-limit");
 const RedisStore = require("rate-limit-redis").default;
 const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
+const http = require("http");
+
+// Import Swagger module
+const { mergeOpenAPISpecs, registerSwaggerRoutes } = require("./swagger");
 
 if (!process.env.JWT_SECRET && !process.env.JWT_PUBLIC_KEY) {
   throw new Error("FATAL ERROR: Either JWT_SECRET or JWT_PUBLIC_KEY is required in .env file");
@@ -57,8 +61,14 @@ const authenticateJWT = (req, res, next) => {
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/refresh",
+    "/api/auth/verify-email",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password/verify-otp",
+    "/api/auth/reset-password",
     "/api/ai/chat",
     "/health",
+    "/docs",
+    "/swagger.json",
   ]);
 
   if (publicRoutes.has(req.path) || req.path.startsWith("/api/v1/")) {
@@ -152,6 +162,10 @@ const routes = {
   },
 };
 
+// ==================== SWAGGER SETUP ====================
+const consolidatedSpec = mergeOpenAPISpecs();
+registerSwaggerRoutes(app, consolidatedSpec);
+
 for (const [gatewayPrefix, { target, servicePrefix }] of Object.entries(routes)) {
   app.use(
     createProxyMiddleware({
@@ -194,5 +208,8 @@ app.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 API Gateway running on port ${PORT}`);
   console.log(`🔗 Routes mapped: ${Object.keys(routes).length} microservices`);
+  console.log(`📚 Swagger UI: http://localhost:${PORT}/docs`);
+  console.log(`📋 OpenAPI JSON: http://localhost:${PORT}/swagger.json`);
+  console.log(`📋 OpenAPI YAML: http://localhost:${PORT}/swagger.yaml`);
   console.log(`===============================================`);
 });
