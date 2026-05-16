@@ -5,8 +5,7 @@
 - [x] Sửa lỗi kết nối .env (P1013) và Drift Data bằng prisma migrate reset
 - [x] [DB-2], [DB-5]: Thêm bảng UserProfile vào Schema (1-1 với User)
 - [x] [DB-3]: Thêm indexes cho user_profiles
-- [x] [DB-6]: Chạy npx prisma migrate dev --name create_user_profiles để áp dụng
-- [x] [DB-7], [DB-8]: Cập nhật prisma/seed.ts (test users có/không verify email) & chạy seed
+- [x] [DB-6]: Chạy npx prisma migrate dev --name create_user_profiles để áp dụng [x] [DB-7], [DB-8]: Cập nhật prisma/seed.ts (test users có/không verify email) & chạy seed
 
 🔴 CRITICAL PATH: OTP System (Days 1-3)
 
@@ -39,13 +38,13 @@
 
 🟣 PROFILE ENDPOINTS (Days 7-8)
 
-- [ ] [PROFILE-1]: GET /api/users/me (Lấy data user + profile của chính mình)
-- [ ] [PROFILE-2]: PATCH /api/users/me (Cập nhật bio, avatar)
-- [ ] [PROFILE-3]: GET /api/users/:userId (Chỉ Admin)
+- [x] [PROFILE-1]: GET /api/users/me (Lấy data user + profile của chính mình)
+- [x] [PROFILE-2]: PATCH /api/users/me (Cập nhật bio, avatar)
+- [x] [PROFILE-3]: GET /api/users/:userId (Chỉ Admin)
 - [ ] [PROFILE-4]: Viết integration test
 
 📝 TESTING, DOCS & FINAL VALIDATION (Days 8-10)
 
 - [ ] [TEST]: Hoàn thiện toàn bộ Test coverage (Unit & E2E)
-- [ ] [DOC-1]: Cập nhật Swagger/OpenAPI cho 7 endpoints mới
-- [ ] [FINAL]: Test tay toàn bộ luồng (Đăng ký -> OTP -> Verify -> Đăng nhập -> Sửa profile)
+- [x] [DOC-1]: Cập nhật Swagger/OpenAPI cho 7 endpoints mới
+- [x] [FINAL]: Test tay toàn bộ luồng (Đăng ký -> OTP -> Verify -> Đăng nhập -> Sửa profile)
