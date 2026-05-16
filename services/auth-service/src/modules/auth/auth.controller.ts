@@ -2,7 +2,14 @@ import z from 'zod';
 import { logger } from '../../config/logger';
 import { NextFunction, Request, Response } from 'express';
 import { env } from '../../config/env';
-import { loginSchema, registerSchema, verifyEmailSchema } from './auth.scheme';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+  verifyResetTokenSchema,
+} from './auth.scheme';
 import { AuthService } from './auth.service';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
@@ -166,6 +173,65 @@ export class AuthController {
       const result = await AuthService.verifyEmail(parseResult.data);
 
       // 3. Return success response or error
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-1]
+   */
+  static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = forgotPasswordSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Forgot Password Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      const result = await AuthService.forgotPassword(parseResult.data);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-2]
+   */
+  static async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = verifyResetTokenSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Verify Reset Token Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      const result = await AuthService.verifyResetOtp(parseResult.data);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-3]
+   */
+  static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = resetPasswordSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(
+          400,
+          'Verify Reset Password Validation Error',
+          'VALIDATION_ERROR',
+          errors,
+        );
+      }
+
+      const result = await AuthService.resetPassword(parseResult.data);
       res.status(200).json(result);
     } catch (error) {
       next(error);

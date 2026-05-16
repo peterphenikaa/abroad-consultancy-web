@@ -9,3 +9,8 @@ export interface JwtPayLoad {
   iat?: number;
   exp?: number;
 }
+
+export interface JwtResetPayLoad {
+  sub: string;
+  purpose: 'password_reset';
+}

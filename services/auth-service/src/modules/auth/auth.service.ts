@@ -10,13 +10,19 @@ import {
   hashPassword,
   verifyPassword,
 } from '../../utils/crypto.util';
-import { signAccessToken } from '../../utils/jwt.util';
+import { signAccessToken, signResetToken, verifyResetToken } from '../../utils/jwt.util';
 import { OtpGenerator } from '../../utils/otpGenerator';
 import { emailService } from '../email/email.service';
 import { OtpService } from '../otp/otp.service';
 import { SessionService } from '../session/session.service';
 import { STATUS_ERROR } from './auth.constant';
-import { LoginDTO, RegisterDTO, VerifyEmailDTO } from './auth.scheme';
+import {
+  ForgotPasswordDTO,
+  LoginDTO,
+  RegisterDTO,
+  ResetPasswordDTO,
+  VerifyEmailDTO,
+} from './auth.scheme';
 
 export class AuthService {
   /**
@@ -284,5 +290,114 @@ export class AuthService {
       .catch((err) => logger.error(`Failed to send welcome email to ${email}: ${err.message}`));
 
     return { message: 'Email verified successfully' };
+  }
+
+  //--- [Reset Password Flow] ---
+
+  // [Reset-1] User submits email to request password reset -> generate OTP and send email
+  /**
+   * Gen OTP and send email
+   * @param payload - The 'forgot password data transfer' object containing user 'email' for password reset.
+   * @returns A success message indicating that if the email is registered and verified, a password reset OTP will be sent. Note that this response is returned regardless of whether the email exists or is verified to prevent 'Email Enumeration' attacks.
+   */
+  static async forgotPassword(payload: ForgotPasswordDTO) {
+    const { email } = payload;
+
+    // 1. find user
+    const user = await prismaClient.user.findUnique({
+      where: { email },
+    });
+
+    // Sec best practise: always return success response to prevent 'Email Enumeration', even if user not found or email not verified
+    if (!user) {
+      return {
+        message: 'If the email is registered and verified, you will receive a password reset OTP.',
+      };
+    }
+
+    // 2. gen otp
+    const otp = OtpGenerator.generateOTP(6);
+    await OtpService.saveOTP(email, OtpType.PASSWORD_RESET, otp);
+
+    // 3. send email (dont use await avoid blocking api res for user)
+    emailService
+      .sendPasswordResetEmail(email, otp, user?.fullName || 'Student')
+      .catch((err) =>
+        logger.error(`Failed to send password reset OTP email to ${email}: ${err.message}`),
+      );
+
+    return {
+      message: 'If the email is registered and verified, you will receive a password reset OTP.',
+    };
+  }
+
+  // [Reset-2] User submits email and OTP to verify -> verify OTP and return a short-lived reset token (JWT or opaque token)
+  /**
+   * Review OTP and gen reset token
+   * @param payload - The 'verify reset token data transfer' object containing user 'email' and 'otp' for password reset verification.
+   * @returns A short-lived reset token (JWT or opaque token) that can be used to authenticate the subsequent password reset request. This token should have a very short expiration time (e.g., 15 minutes) to enhance security.
+   */
+  static async verifyResetOtp(payload: VerifyEmailDTO) {
+    const { email, otp } = payload;
+
+    // 1. find user
+    const user = await prismaClient.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+    }
+
+    // 2. verify OTP
+    await OtpService.validateOTP(email, OtpType.PASSWORD_RESET, otp);
+
+    // 3. Gen JWT
+    const resetToken = signResetToken(user.id);
+
+    return {
+      message: 'OTP verified successfully. Use the reset token to reset your password.',
+      resetToken,
+    };
+  }
+
+  // [Reset-3] User submits new password along with the reset token -> update password and revoke sessions
+  /**
+   * Reset the user's password and revoke all active sessions
+   * @param payload - The ResetPasswordDTO containing the 'token' and 'newPassword'
+   * @returns A success message
+   */
+  static async resetPassword(payload: ResetPasswordDTO) {
+    const { token, newPassword } = payload;
+
+    let decoded;
+
+    try {
+      // 1. Verify reset token
+      decoded = verifyResetToken(token);
+    } catch (error) {
+      throw new ApiError(401, 'Invalid or expired reset token', 'INVALID_RESET_TOKEN');
+    }
+
+    // 2. hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    // 3. Execute Transaction: Upate pass & Revorke all existing session
+    await prismaClient.$transaction([
+      // update new pass
+      prismaClient.user.update({
+        where: { id: decoded.sub },
+        data: { passwordHash: hashedPassword },
+      }),
+
+      // delete all old session
+      prismaClient.userSession.deleteMany({
+        where: { userId: decoded.sub },
+      }),
+    ]);
+
+    return {
+      message: 'Password has been reset successfully. Please log in with your new password.',
+    };
   }
 }
