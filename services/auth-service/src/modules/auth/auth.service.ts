@@ -23,6 +23,7 @@ import {
   ResetPasswordDTO,
   VerifyEmailDTO,
 } from './auth.scheme';
+import { ROLE_PERMISSIONS } from '../../constants/roles';
 
 export class AuthService {
   /**
@@ -136,6 +137,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       sessionId: session.id,
+      permissions: ROLE_PERMISSIONS[user.role] ?? [],
     });
 
     return {
@@ -204,6 +206,7 @@ export class AuthService {
       email: session.user.email,
       role: session.user.role,
       sessionId: session.id,
+      permissions: ROLE_PERMISSIONS[session.user.role] ?? [],
     });
 
     return {
