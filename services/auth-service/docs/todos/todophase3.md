@@ -28,14 +28,14 @@
 - [x] [AUTH-1]: Sửa endpoint Đăng ký (POST /auth/register): Gửi OTP, set email_verified = false
 - [x] [AUTH-2]: Tạo endpoint POST /auth/verify-email: Nhận OTP, check Redis, set email_verified = true
 - [x] [AUTH-3]: Tạo middleware checkEmailVerified.ts
-- [x] [AUTH-4]: Viết integration test luồng verify email
+- [] [AUTH-4]: Viết integration test luồng verify email
 
 🔵 PASSWORD RESET FLOW (Days 6-7)
 
-- [ ] [RESET-1]: POST /auth/forgot-password (Tạo & gửi OTP)
-- [ ] [RESET-2]: POST /auth/reset-password/verify-otp (Nhận OTP, trả về JWT 5 phút)
-- [ ] [RESET-3]: POST /auth/reset-password (Đổi pass, revoke mọi session cũ)
-- [ ] [RESET-4]: Viết integration test
+- [x] [RESET-1]: POST /auth/forgot-password (Tạo & gửi OTP)
+- [x] [RESET-2]: POST /auth/reset-password/verify-otp (Nhận OTP, trả về JWT 5 phút)
+- [x] [RESET-3]: POST /auth/reset-password (Đổi pass, revoke mọi session cũ)
+- [] [RESET-4]: Viết integration test
 
 🟣 PROFILE ENDPOINTS (Days 7-8)
 

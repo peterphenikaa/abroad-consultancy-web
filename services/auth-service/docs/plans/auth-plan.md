@@ -80,9 +80,9 @@
 
 ### Phase 3: Phân Quyền & OTP/Email (Tuần 2)
 
-- [ ] Middleware: `validateToken`, `checkPermission` (RBAC)
+- [x] Middleware: `validateToken`, `checkPermission` (RBAC)
 - [ ] Tích hợp AWS SES (Email) và Twilio (SMS)
-- [ ] Logic OTP: sinh mã 6 chữ số, lưu Redis với TTL 10 phút
+- [x] Logic OTP: sinh mã 6 chữ số, lưu Redis với TTL 10 phút
 - [ ] `GET /users/me`: lấy thông tin profile
 - [ ] API cập nhật profile cơ bản
 
