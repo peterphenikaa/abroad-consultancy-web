@@ -11,7 +11,7 @@ const ALLOWED_CONTENT_UPDATE_FIELDS = [
     'metadata',
     'orderIndex',
 ];
- 
+
 const ContentService = {
     createContent: async (contentData) => {
 
@@ -121,7 +121,7 @@ const ContentService = {
         });
     },
 
-    getAllContent: async ({lessonId, page = 1, limit = 10 }) => {
+    getAllContent: async ({ lessonId, page = 1, limit = 10 }) => {
         const safePage = Math.max(1, page);
         const safeLimit = Math.max(1, limit);
         const skip = (safePage - 1) * safeLimit;
@@ -155,6 +155,99 @@ const ContentService = {
         const content = await prisma.contentItem.findUnique({ where: { contentId } });
         if (!content) throw createError('Content not found!', 404);
         return content;
+    },
+
+    getQuizOverview: async (contentId, userId) => {
+        const content = await prisma.contentItem.findUnique({
+            where: { contentId },
+            include: {
+                quizAttempts: {
+                    where: { userId },
+                    orderBy: { startedAt: 'desc' },
+                }
+            }
+        });
+
+        if (!content || content.type !== 'QUIZ') {
+            throw createError('Quiz content not found!', 404);
+        }
+
+        return {
+            id: content.contentId,
+            title: content.title,
+            description: content.description,
+            settings: content.metadata || {},
+            history: content.quizAttempts
+        };
+    },
+
+    submitQuiz: async (contentId, userId, answers, timeTaken) => {
+        const quizContent = await prisma.contentItem.findUnique({
+            where: { contentId },
+        });
+        if (!quizContent || quizContent.type !== 'QUIZ') {
+            throw createError('Quiz content not found!', 404);
+        }
+
+        const maxAttempts = quizContent.metadata?.maxAttempts || 3;
+        const attemptsCount = await prisma.quizAttempt.count({
+            where: { userId, contentId }
+        });
+        if (attemptsCount >= maxAttempts) {
+            throw createError(`Bạn đã hết lượt làm lại (Tối đa: ${maxAttempts} lượt).`, 403);
+        }
+
+        const questions = quizContent.metadata?.questions || [];
+        let correctCount = 0;
+        for (const question of questions) {
+            const userAnswer = answers[question.id];
+            if (userAnswer === question.correctOptionId) {
+                correctCount++;
+            }
+        }
+        const score = Math.round((correctCount / questions.length) * 100);
+        const passStatus = score >= (quizContent.metadata?.passingScore || 50) ? 'PASSED' : 'FAILED';
+
+        const completedAt = new Date();
+        const startedAt = new Date(completedAt.getTime() - (timeTaken * 1000));
+
+        const attempt = await prisma.quizAttempt.create({
+            data: {
+                userId,
+                contentId,
+                score,
+                timeTaken: timeTaken,
+                status: passStatus,
+                startedAt: startedAt,
+                completedAt: completedAt,
+            }
+        });
+
+        if (passStatus === 'PASSED') {
+            await prisma.contentProgress.upsert({
+                where: {
+                    userId_contentId: {
+                        userId,
+                        contentId
+                    }
+                },
+                update: {
+                    isCompleted: true,
+                    completedAt: new Date()
+                },
+                create: {
+                    userId,
+                    contentId,
+                    isCompleted: true,
+                    completedAt: new Date()
+                }
+            });
+        }
+
+        const totalAttempts = await prisma.quizAttempt.count({
+            where: { userId, contentId }
+        });
+        return { ...attempt, totalAttempts };
     }
 };
 

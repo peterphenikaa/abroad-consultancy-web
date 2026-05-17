@@ -9,6 +9,10 @@ const { rateLimit } = require("express-rate-limit");
 const RedisStore = require("rate-limit-redis").default;
 const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
+const http = require("http");
+
+// Import Swagger module
+const { mergeOpenAPISpecs, registerSwaggerRoutes } = require("./swagger");
 
 /** Cho phép JWT_PUBLIC_KEY=@relative/path hoặc đường dẫn tuyệt đối (khớp auth-service). */
 function resolvePemFromEnv(varName) {
@@ -83,15 +87,20 @@ const authenticateJWT = (req, res, next) => {
     "/api/auth/refresh",
     "/api/auth/logout",
     "/api/auth/verify-email",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password/verify-otp",
+    "/api/auth/reset-password",
     "/api/ai/chat",
     "/api/payments/webhook",
     "/api/payments/health",
     "/api/payments/vnpay/return",
     "/api/payments/vnpay/ipn",
     "/health",
+    "/docs",
+    "/swagger.json",
   ]);
 
-  if (publicRoutes.has(pathKey)) {
+  if (publicRoutes.has(pathKey) || pathKey.startsWith("/api/v1/")) {
     return next();
   }
 
@@ -135,8 +144,24 @@ const routes = {
     servicePrefix: "/api",          
   },
   "/api/content": {
-    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3004",
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
     servicePrefix: "/api/content",
+  },
+  "/api/v1/courses": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/courses",
+  },
+  "/api/v1/lessons": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/lessons",
+  },
+  "/api/v1/modules": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/modules",
+  },
+  "/api/v1/contents": {
+    target: process.env.CONTENT_SERVICE_URL || "http://content-service:3000",
+    servicePrefix: "/api/v1/contents",
   },
   "/api/exams": {
     target: process.env.EXAM_SERVICE_URL || "http://exam-service:3005",
@@ -163,6 +188,10 @@ const routes = {
     servicePrefix: "/api/analytics",
   },
 };
+
+// ==================== SWAGGER SETUP ====================
+const consolidatedSpec = mergeOpenAPISpecs();
+registerSwaggerRoutes(app, consolidatedSpec);
 
 for (const [gatewayPrefix, { target, servicePrefix }] of Object.entries(routes)) {
   app.use(
@@ -206,5 +235,8 @@ app.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 API Gateway running on port ${PORT}`);
   console.log(`🔗 Routes mapped: ${Object.keys(routes).length} microservices`);
+  console.log(`📚 Swagger UI: http://localhost:${PORT}/docs`);
+  console.log(`📋 OpenAPI JSON: http://localhost:${PORT}/swagger.json`);
+  console.log(`📋 OpenAPI YAML: http://localhost:${PORT}/swagger.yaml`);
   console.log(`===============================================`);
 });

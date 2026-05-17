@@ -10,26 +10,48 @@ const UPLOAD_RULES = {
     bucket: 'videos',
     allowedExtensions: ['.mp4', '.mov', '.mkv'],
     allowedMimeTypes: ['video/mp4', 'video/quicktime', 'video/x-matroska'],
-    maxBytes: 500 * 1024 * 1024, 
+    maxBytes: 500 * 1024 * 1024,
   },
   document: {
     bucket: 'documents',
     allowedExtensions: ['.pdf'],
     allowedMimeTypes: ['application/pdf'],
-    maxBytes: 50 * 1024 * 1024, 
+    maxBytes: 50 * 1024 * 1024,
+  },
+  image: {
+    bucket: 'images',
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'],
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
+    maxBytes: 10 * 1024 * 1024,
   },
 };
 
-function ensureBucket(bucket) {
-  return minioClient.bucketExists(bucket).then((exists) => {
-    if (!exists) return minioClient.makeBucket(bucket, 'us-east-1');
-  });
+async function ensureBucket(bucket) {
+  const exists = await minioClient.bucketExists(bucket);
+  if (!exists) {
+    await minioClient.makeBucket(bucket, 'us-east-1');
+  }
+
+  if (bucket === 'images') {
+    const policy = {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Action: ['s3:GetObject'],
+          Effect: 'Allow',
+          Principal: { AWS: ['*'] },
+          Resource: [`arn:aws:s3:::${bucket}/*`]
+        }
+      ]
+    };
+    await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
+  }
 }
 
 function normalizeType(type) {
   if (!type) throw createError('type is required');
   const t = String(type).toLowerCase();
-  if (!UPLOAD_RULES[t]) throw createError('Unsupported type. Allowed: video, document');
+  if (!UPLOAD_RULES[t]) throw createError('Unsupported type. Allowed: video, document, image');
   return t;
 }
 
@@ -90,8 +112,11 @@ const StorageService = {
       PRESIGNED_EXPIRES_SECONDS
     );
 
+    const publicUrl = `http://localhost:${process.env.MINIO_PORT}/${rule.bucket}/${objectKey}`;
+
     return {
       uploadUrl,
+      publicUrl,
       bucket: rule.bucket,
       objectKey,
       expiresIn: PRESIGNED_EXPIRES_SECONDS,

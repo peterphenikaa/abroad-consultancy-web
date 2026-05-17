@@ -1,4 +1,5 @@
 import { Role } from '@prisma/client';
+import { PERMISSIONS, PermissionType } from './permission.constant';
 
 // prioty order for role hierarchy
 export const ROLE_HIERARCHY: Record<Role, number> = {
@@ -9,38 +10,46 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
   [Role.SUPER_ADMIN]: 5,
 };
 
-// Permission map
-export const ROLE_PERMISSIONS: Record<Role, string[]> = {
-  [Role.STUDENT]: ['profile:read:own', 'profile:update:own', 'course:read', 'enrollment:create'],
+// Permission map - strictly typed to use only defined permissions
+export const ROLE_PERMISSIONS: Record<Role, PermissionType[]> = {
+  [Role.STUDENT]: [
+    PERMISSIONS.PROFILE_READ_OWN,
+    PERMISSIONS.PROFILE_UPDATE_OWN,
+    PERMISSIONS.COURSE_READ,
+    PERMISSIONS.ENROLLMENT_CREATE,
+  ],
   [Role.TEACHER]: [
-    'profile:read:own',
-    'profile:update:own',
-    'course:read',
-    'course:create',
-    'course:update:own',
-    'student:view',
-    'grade:manage',
+    PERMISSIONS.PROFILE_READ_OWN,
+    PERMISSIONS.PROFILE_UPDATE_OWN,
+    PERMISSIONS.COURSE_READ,
+    PERMISSIONS.COURSE_CREATE,
+    PERMISSIONS.COURSE_UPDATE_OWN,
+    PERMISSIONS.STUDENT_VIEW,
+    PERMISSIONS.GRADE_MANAGE,
   ],
   [Role.CONTENT_CREATOR]: [
-    'profile:read:own',
-    'profile:update:own',
-    'course:read',
-    'course:create',
-    'course:update:own',
-    'content:manage',
+    PERMISSIONS.PROFILE_READ_OWN,
+    PERMISSIONS.PROFILE_UPDATE_OWN,
+    PERMISSIONS.COURSE_READ,
+    PERMISSIONS.COURSE_CREATE,
+    PERMISSIONS.COURSE_UPDATE_OWN,
+    PERMISSIONS.CONTENT_MANAGE,
   ],
   [Role.ORG_ADMIN]: [
-    'profile:read:own',
-    'profile:update:own',
-    'profile:read:any',
-    'user:manage',
-    'org:manage',
-    'report:view',
+    PERMISSIONS.PROFILE_READ_OWN,
+    PERMISSIONS.PROFILE_UPDATE_OWN,
+    PERMISSIONS.PROFILE_READ_ANY,
+    PERMISSIONS.USER_MANAGE,
+    PERMISSIONS.ORG_MANAGE,
+    PERMISSIONS.REPORT_VIEW,
   ],
-  [Role.SUPER_ADMIN]: ['*'],
+  [Role.SUPER_ADMIN]: [PERMISSIONS.ALL],
 };
 
 // helper: role A >= role B?
 export function hasRoleLevel(userRole: Role, requiredRole: Role): boolean {
   return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
 }
+
+// Export PERMISSIONS for external use
+export { PERMISSIONS, PermissionType } from './permission.constant';

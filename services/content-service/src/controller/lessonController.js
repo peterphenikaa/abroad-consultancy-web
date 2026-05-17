@@ -65,6 +65,16 @@ const LessonController = {
         } catch (error) {
             return sendError(res, error);
         }
+    },
+
+    markContentCompleted: async (req, res) => {
+        try {
+            const { id } = req.params; 
+            const progress = await lessonService.markContentCompleted(id);
+            return res.status(200).json(progress);
+        } catch (error) {
+            return sendError(res, error);
+        }
     }
 };
 

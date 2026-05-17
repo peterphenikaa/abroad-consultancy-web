@@ -117,6 +117,38 @@ const LessonService = {
         const lesson = await prisma.lesson.findUnique({ where: { lessonId } });
         if (!lesson) throw createError('Lesson not found!', 404);
         return lesson;
+    },
+
+    //mock tạm userId để test: 11111111-1111-1111-1111-111111111111
+    markContentCompleted: async (contentId, userId="11111111-1111-1111-1111-111111111111") => {
+        const existingProgress = await prisma.contentProgress.findUnique({
+            where: {
+                userId_contentId: { userId, contentId }
+            }
+        });
+
+        if (!existingProgress) {
+            return await prisma.contentProgress.create({
+                data: {
+                    userId,
+                    contentId,
+                    isCompleted: true,
+                    completedAt: new Date()
+                }
+            });
+        }
+        if (!existingProgress.isCompleted) {
+            return await prisma.contentProgress.update({
+                where: {
+                    id: existingProgress.id
+                },
+                data: {
+                    isCompleted: true,
+                    completedAt: new Date()
+                }
+            });
+        }
+        return existingProgress;
     }
 };
 

@@ -8,6 +8,9 @@ import cookieParser from 'cookie-parser';
 import authRouter from './modules/auth/auth.route';
 import http from 'http';
 import { AppError } from './types/shared.type';
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'yaml';
+import fs from 'fs';
 
 const app = express();
 
@@ -51,6 +54,30 @@ app.get('/ready', async (_req: Request, res: Response) => {
       redis: 'DOWN_OR_UNREACHABLE',
     });
   }
+});
+
+// Swagger UI setup
+const swaggerFile = fs.readFileSync('./docs/swagger.yaml', 'utf8');
+const swaggerSpec = yaml.parse(swaggerFile);
+
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      url: '/api/swagger.json',
+    },
+    customCss: `
+      .topbar { display: none; }
+      .swagger-ui .info .title { color: #1976d2; }
+    `,
+  }),
+);
+
+// Serve swagger.json for OpenAPI clients
+app.get('/swagger.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 // Auth route
