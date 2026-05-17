@@ -1,0 +1,146 @@
+[
+  {
+    "band": 9.0,
+    "cefr": "C2",
+    "criterion": "Task Achievement",
+    "description": "Fully satisfies all the requirements of the task. Clearly presents a fully developed response."
+  },
+  {
+    "band": 9.0,
+    "cefr": "C2",
+    "criterion": "Coherence and Cohesion",
+    "description": "Uses cohesion in such a way that it attracts no attention. Skilfully manages paragraphing."
+  },
+  {
+    "band": 9.0,
+    "cefr": "C2",
+    "criterion": "Lexical Resource",
+    "description": "Uses a wide range of vocabulary with very natural and sophisticated control of lexical features; rare minor errors occur only as 'slips'."
+  },
+  {
+    "band": 9.0,
+    "cefr": "C2",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses a wide range of structures with full flexibility and accuracy; rare minor errors occur only as 'slips'."
+  },
+  {
+    "band": 8.0,
+    "cefr": "C1",
+    "criterion": "Task Achievement",
+    "description": "Covers all requirements of the task sufficiently. Presents, highlights and illustrates key features/bullet points clearly and appropriately."
+  },
+  {
+    "band": 8.0,
+    "cefr": "C1",
+    "criterion": "Coherence and Cohesion",
+    "description": "Sequences information and ideas logically. Manages all aspects of cohesion well. Uses paragraphing sufficiently and appropriately."
+  },
+  {
+    "band": 8.0,
+    "cefr": "C1",
+    "criterion": "Lexical Resource",
+    "description": "Uses a wide vocabulary fluently and flexibly to convey precise meanings. Skilfully uses uncommon lexical items but there may be occasional inaccuracies in word choice and collocation."
+  },
+  {
+    "band": 8.0,
+    "cefr": "C1",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses a wide range of structures. The majority of sentences are error-free. Makes only very occasional errors or inappropriacies."
+  },
+  {
+    "band": 7.0,
+    "cefr": "C1",
+    "criterion": "Task Achievement",
+    "description": "Covers the requirements of the task. Presents a clear overview of main trends, differences or stages. Addresses all parts of the task with a clear position."
+  },
+  {
+    "band": 7.0,
+    "cefr": "C1",
+    "criterion": "Coherence and Cohesion",
+    "description": "Logically organises information and ideas; there is clear progression throughout. Uses a range of cohesive devices appropriately although there may be some under- or over-use."
+  },
+  {
+    "band": 7.0,
+    "cefr": "C1",
+    "criterion": "Lexical Resource",
+    "description": "Uses a sufficient range of vocabulary to allow some flexibility and precision. Uses less common lexical items with some awareness of style and collocation. May produce occasional errors in word choice, spelling and/or word formation."
+  },
+  {
+    "band": 7.0,
+    "cefr": "C1",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses a variety of complex structures. Produces frequent error-free sentences. Has good control of grammar and punctuation but may make a few errors."
+  },
+  {
+    "band": 6.0,
+    "cefr": "B2",
+    "criterion": "Task Achievement",
+    "description": "Addresses the requirements of the task. Presents an overview with information appropriately selected. Presents and adequately highlights key features/bullet points but details may be irrelevant, inappropriate or inaccurate."
+  },
+  {
+    "band": 6.0,
+    "cefr": "B2",
+    "criterion": "Coherence and Cohesion",
+    "description": "Arranges information and ideas coherently and there is a clear overall progression. Uses cohesive devices effectively, but cohesion within and/or between sentences may be faulty or mechanical."
+  },
+  {
+    "band": 6.0,
+    "cefr": "B2",
+    "criterion": "Lexical Resource",
+    "description": "Uses an adequate range of vocabulary for the task. Attempts to use less common vocabulary but with some inaccuracy. Makes some errors in spelling and/or word formation, but they do not impede communication."
+  },
+  {
+    "band": 6.0,
+    "cefr": "B2",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses a mix of simple and complex sentence forms. Makes some errors in grammar and punctuation but they rarely reduce communication."
+  },
+  {
+    "band": 5.0,
+    "cefr": "B1",
+    "criterion": "Task Achievement",
+    "description": "Generally addresses the task; the format may be inappropriate in places. Recounts detail mechanically with no clear overview; there may be no data to support the description."
+  },
+  {
+    "band": 5.0,
+    "cefr": "B1",
+    "criterion": "Coherence and Cohesion",
+    "description": "Presents information with some organisation but there may be a lack of overall progression. Makes inadequate, inaccurate or over-use of cohesive devices."
+  },
+  {
+    "band": 5.0,
+    "cefr": "B1",
+    "criterion": "Lexical Resource",
+    "description": "Uses a limited range of vocabulary, but this is minimally adequate for the task. May make noticeable errors in spelling and/or word formation that may cause some difficulty for the reader."
+  },
+  {
+    "band": 5.0,
+    "cefr": "B1",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses only a limited range of structures. Attempts complex sentences but these tend to be less accurate than simple sentences. May make frequent grammatical errors and punctuation may be faulty."
+  },
+  {
+    "band": 4.0,
+    "cefr": "A2",
+    "criterion": "Task Achievement",
+    "description": "Attempts to address the task but does not cover all key features/bullet points; the format may be inappropriate."
+  },
+  {
+    "band": 4.0,
+    "cefr": "A2",
+    "criterion": "Coherence and Cohesion",
+    "description": "Presents information but these are not arranged coherently and there is no clear progression in the response. Uses some basic cohesive devices but these may be inaccurate or repetitive."
+  },
+  {
+    "band": 4.0,
+    "cefr": "A2",
+    "criterion": "Lexical Resource",
+    "description": "Uses only basic vocabulary which may be used repetitively or which may be inappropriate for the task. Errors in spelling and/or word formation are frequent and may cause strain for the reader."
+  },
+  {
+    "band": 4.0,
+    "cefr": "A2",
+    "criterion": "Grammatical Range and Accuracy",
+    "description": "Uses only a very limited range of structures with only rare use of subordinate clauses. Some structures are accurate but errors predominate, and punctuation is often faulty."
+  }
+]

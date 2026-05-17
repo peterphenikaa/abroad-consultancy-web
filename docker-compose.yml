@@ -60,11 +60,13 @@ services:
     environment:
       - PORT=8080
       - CONTENT_SERVICE_URL=http://content-service:3000
+      - AES_SCORING_WORKER_URL=http://ai-scoring-worker:8088
     ports:
       - "8081:8080"
     depends_on:
       - auth-service
       - user-service
+      - ai-scoring-worker
     networks:
       - app-network
 
@@ -96,6 +98,16 @@ services:
       - KAFKA_BROKER=kafka:9092
     depends_on:
       - kafka
+    networks:
+      - app-network
+
+  ai-scoring-worker:
+    build: ./ai-scoring-worker
+    env_file: .env
+    ports:
+      - "8088:8088"
+    depends_on:
+      - redis
     networks:
       - app-network
 

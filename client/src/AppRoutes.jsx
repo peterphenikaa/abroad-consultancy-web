@@ -7,6 +7,7 @@ import PaymentPage from "./pages/PaymentPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import AnalyticsPage from "./pages/AnalyticsPage.jsx";
+import WritingScorePage from "./pages/WritingScorePage.jsx";
 import Navigation from "./components/Navigation.jsx";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 import QuizExecutionPage from "./pages/courses/QuizExecutionPage.jsx";
@@ -37,6 +38,7 @@ export default function AppRoutes() {
           <Routes location={location}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/advisor" element={<AIAdvisorPage />} />
+            <Route path="/writing-score" element={<WritingScorePage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />

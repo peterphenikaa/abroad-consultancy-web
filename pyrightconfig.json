@@ -1,0 +1,7 @@
+{
+  "include": ["ai-scoring-worker"],
+  "venvPath": "ai-scoring-worker",
+  "venv": "venv",
+  "pythonVersion": "3.13",
+  "executionEnvironments": [{ "root": "ai-scoring-worker" }]
+}
