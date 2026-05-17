@@ -24,6 +24,7 @@ import {
   VerifyEmailDTO,
 } from './auth.scheme';
 import { ROLE_PERMISSIONS } from '../../constants/roles';
+import { User } from '@prisma/client';
 
 export class AuthService {
   /**
@@ -405,6 +406,63 @@ export class AuthService {
 
     return {
       message: 'Password has been reset successfully. Please log in with your new password.',
+    };
+  }
+
+  // --- Google OAuth SSO ---
+  /**
+   * API for Google SSO Callback: This method will be called by the Google OAuth callback route after successful authentication with Google. It will handle finding or creating the user in the database based on the Google profile information, and then generate access and refresh tokens for the user to log them in.
+   * @param user User information extracted from the Google profile by Passport.js during the OAuth callback process.
+   * @param context Client context containing request information such as IP address and user agent, which can be used for session management and security monitoring.
+   * @returns An object containing the access token, refresh token, token expiration information, and user details to be sent back to the client for authentication.
+   */
+  static async googleLogin(user: User, context?: ClientContext) {
+    // 1. acc status check
+    if (user.status !== 'ACTIVE') {
+      const errorMessage =
+        STATUS_ERROR[user.status] || 'Account is not active. Please contact support.';
+      throw new ApiError(403, errorMessage, 'ACCOUNT_INACTIVE');
+    }
+
+    // 2. Generate Refresh Token and hash it before storing in database
+    const rawRefreshToken = generateOpaqueToken();
+    const hashedRefreshToken = hashOpaqueToken(rawRefreshToken);
+
+    // calc the expiration date for refresh token (e.g., 7 days)
+    const expiresInDay = env.REFRESH_TOKEN_TTL_DAYS;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiresInDay);
+
+    // 3. Store Session in database with hashed refresh token
+    const ip = context?.ip || 'Unknown IP';
+    const devicesInfo = context?.userAgent || 'Unknown Device';
+
+    const session = await SessionService.createSession(
+      user.id,
+      hashedRefreshToken,
+      expiresAt,
+      devicesInfo,
+      ip,
+    );
+
+    // 4. Generate Access Token
+    const accessToken = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: session.id,
+      permissions: ROLE_PERMISSIONS[user.role] ?? [],
+    });
+
+    return {
+      accessToken,
+      rawRefreshToken,
+      expiresInDay,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }
