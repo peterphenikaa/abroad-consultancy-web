@@ -5,11 +5,11 @@ services:
     ports:
       - '5555:5555'
     volumes:
-      - ./:/usr/src/app
+      - .:/usr/src/app
       - /usr/src/app/node_modules
     command: >
       sh -c "
+        npm install &&
         npx prisma generate &&
-        npx prisma db push &&
         npm run dev
       "
