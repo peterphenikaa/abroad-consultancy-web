@@ -95,6 +95,10 @@ export class AuthService {
       throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
+    if (!user.passwordHash) {
+      throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+    }
+
     // 3. Password verification
     const isPasswordValid = await verifyPassword(password, user.passwordHash);
 
@@ -120,7 +124,7 @@ export class AuthService {
     // 6. Store Session in database with hashed refresh token
 
     // add ip and device info for better session management and security monitoring
-    const ip = context.ip;
+    const ip = context.ip || 'Unknown IP';
     const devicesInfo = context.userAgent || 'Unknown Device';
 
     const session = await SessionService.createSession(
