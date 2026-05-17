@@ -1,4 +1,6 @@
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
@@ -8,7 +10,22 @@ const RedisStore = require("rate-limit-redis").default;
 const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
 
-if (!process.env.JWT_SECRET && !process.env.JWT_PUBLIC_KEY) {
+/** Cho phép JWT_PUBLIC_KEY=@relative/path hoặc đường dẫn tuyệt đối (khớp auth-service). */
+function resolvePemFromEnv(varName) {
+  const raw = process.env[varName];
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("@")) {
+    const rel = trimmed.slice(1);
+    const full = path.isAbsolute(rel) ? rel : path.resolve(process.cwd(), rel);
+    return fs.readFileSync(full, "utf8");
+  }
+  return trimmed;
+}
+
+const jwtPublicKeyPem = resolvePemFromEnv("JWT_PUBLIC_KEY");
+
+if (!process.env.JWT_SECRET && !jwtPublicKeyPem) {
   throw new Error("FATAL ERROR: Either JWT_SECRET or JWT_PUBLIC_KEY is required in .env file");
 }
 
@@ -52,26 +69,37 @@ const limiter = rateLimit({
 
 app.use("/api", limiter);
 
+/** req.path đôi khi có trailing slash; so khớp route công khai cho ổn định */
+function gatewayPath(req) {
+  const p = req.path || req.url?.split("?")[0] || "";
+  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+}
+
 const authenticateJWT = (req, res, next) => {
+  const pathKey = gatewayPath(req);
   const publicRoutes = new Set([
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/refresh",
+    "/api/auth/logout",
+    "/api/auth/verify-email",
     "/api/ai/chat",
+    "/api/payments/webhook",
+    "/api/payments/health",
+    "/api/payments/vnpay/return",
+    "/api/payments/vnpay/ipn",
     "/health",
   ]);
 
-  if (publicRoutes.has(req.path)) {
+  if (publicRoutes.has(pathKey)) {
     return next();
   }
 
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
-    const verifyOptions = process.env.JWT_PUBLIC_KEY
-      ? { algorithms: ["RS256"] }
-      : {};
-    const secret = process.env.JWT_PUBLIC_KEY || process.env.JWT_SECRET;
+    const verifyOptions = jwtPublicKeyPem ? { algorithms: ["RS256"] } : {};
+    const secret = jwtPublicKeyPem || process.env.JWT_SECRET;
 
     jwt.verify(token, secret, verifyOptions, (err, user) => {
       if (err) {
@@ -80,7 +108,7 @@ const authenticateJWT = (req, res, next) => {
           message: "Token không hợp lệ hoặc đã hết hạn",
         });
       }
-      req.headers["x-user-id"] = user.id || user.userId;
+      req.headers["x-user-id"] = user.sub || user.id || user.userId;
       next();
     });
   } else {

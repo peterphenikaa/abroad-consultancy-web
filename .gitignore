@@ -36,5 +36,8 @@ client/dist/
 docker-compose.override.yml
 docker-compose.dev.yml
 
+# Dev JWT (generate với node scripts/generate-dev-jwt-keys.js)
+dev-keys/
+
 # Doc
 AGENTS.md
