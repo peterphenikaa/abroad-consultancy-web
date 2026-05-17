@@ -8,5 +8,6 @@ router.delete('/:id', LessonController.deleteLesson);
 router.patch('/:id/publish', LessonController.publishLesson);
 router.get('/', LessonController.getAllLesson);
 router.get('/:id', LessonController.getLessonById);
+router.post('/:id/complete', LessonController.markContentCompleted);
 
 module.exports = router;

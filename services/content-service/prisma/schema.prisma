@@ -8,63 +8,139 @@ datasource db {
 }
 
 model Course {
-  courseId        String       @id @default(uuid())
-  title           String       @db.VarChar(255)
-  description     String?      @db.Text
-  thumbnailUrl    String?      @db.Text
-  subject         String?      @db.VarChar(100)
-  curriculum      String?      @db.VarChar(100)
-  level           String?      @db.VarChar(50) 
-  instructorId    String       @db.Uuid
-  price           Decimal      @default(0) @db.Decimal(12, 2)
-  isFree          Boolean      @default(true)
-  tags            Json?        @default("[]")
-  status          CourseStatus @default(DRAFT)
-  version         Int          @default(1)
-  parentCourseId  String?      @db.Uuid
-  totalDuration   Int          @default(0)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  courseId           String       @id @default(uuid()) @db.Uuid
+  title              String       @db.VarChar(255)
+  description        String?      @db.Text
+  thumbnailUrl       String?      @db.Text
+  subject            String?      @db.VarChar(100)
+  curriculum         String?      @db.VarChar(100)
+  level              String?      @db.VarChar(50)
+  instructorId       String       @db.Uuid
+  price              Decimal      @default(0) @db.Decimal(12, 2)
+  isFree             Boolean      @default(true)
+  tags               Json?        @default("[]")
+  status             CourseStatus @default(DRAFT)
+  version            Int          @default(1)
+  parentCourseId     String?      @db.Uuid
+  totalDuration      Int          @default(0)
+  accessDurationDays Int?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  modules         Module[]    
+  modules     Module[]
+  enrollments Enrollment[]
 }
 
 model Module {
-  moduleId    String   @id @default(uuid())
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
+  moduleId    String  @id @default(uuid()) @db.Uuid
+  courseId    String  @db.Uuid
+  course      Course  @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  title       String  @db.VarChar(255)
+  description String? @db.Text
   orderIndex  Int
-  status      Status   @default(DRAFT)
+  status      Status  @default(DRAFT)
 
-  lessons     Lesson[] 
+  lessons Lesson[]
 }
 
 model Lesson {
-  lessonId     String        @id @default(uuid())
-  moduleId     String
-  module       Module        @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  title        String        @db.VarChar(255)
-  objectives   String?       @db.Text
-  duration     Int?
-  orderIndex   Int
-  status       Status        @default(DRAFT)
-  
-  contentItems ContentItem[] 
+  lessonId   String  @id @default(uuid()) @db.Uuid
+  moduleId   String  @db.Uuid
+  module     Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  title      String  @db.VarChar(255)
+  objectives String? @db.Text
+  duration   Int?
+  orderIndex Int
+  status     Status  @default(DRAFT)
+
+  contentItems ContentItem[]
+  milestones   Milestone[]
 }
 
 model ContentItem {
-  contentId   String      @id @default(uuid())
-  lessonId    String
+  contentId   String      @id @default(uuid()) @db.Uuid
+  lessonId    String      @db.Uuid
   lesson      Lesson      @relation(fields: [lessonId], references: [lessonId], onDelete: Cascade)
   type        ContentType
   title       String?
   description String?     @db.Text
   contentUrl  String?     @db.Text
-  metadata    Json?       
+  metadata    Json?
+  duration    Int?
   orderIndex  Int
   status      Status      @default(DRAFT)
+
+  quizAttempts QuizAttempt[]
+  progresses   ContentProgress[]
+}
+
+model Enrollment {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  courseId  String           @db.Uuid
+  course    Course           @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  expiresAt DateTime?
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+model ContentProgress {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @db.Uuid
+  contentId   String      @db.Uuid
+  content     ContentItem @relation(fields: [contentId], references: [contentId], onDelete: Cascade)
+  isCompleted Boolean     @default(false)
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([userId, contentId])
+  @@index([userId])
+}
+
+model QuizAttempt {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @db.Uuid
+  contentId   String      @db.Uuid
+  content     ContentItem @relation(fields: [contentId], references: [contentId], onDelete: Cascade)
+  score       Float       @default(0)
+  timeTaken   Int         @default(0)
+  status      QuizStatus  @default(IN_PROGRESS)
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+
+  @@index([userId, contentId])
+}
+
+model Milestone {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  title      String    @db.VarChar(255)
+  targetDate DateTime?
+  completed  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  lessonId   String?   @db.Uuid
+  lesson     Lesson?   @relation(fields: [lessonId], references: [lessonId], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum QuizStatus {
+  PASSED
+  FAILED
+  IN_PROGRESS
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
 }
 
 enum CourseLevel {
@@ -90,6 +166,10 @@ enum ContentType {
   VIDEO
   DOCUMENT
   IMAGE
+  INFOGRAPHIC
   AUDIO
-  OTHER
+  DICTATION
+  QUIZ
+  PRACTICE_WRITING
+  PRACTICE_SPEAKING
 }

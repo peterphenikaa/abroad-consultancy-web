@@ -5,9 +5,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 
-const AI_RAG_API_BASE_URL = (
-  import.meta.env.VITE_AI_RAG_API_BASE_URL || 'http://localhost:3003'
-).replace(/\/$/, '');
+const AI_RAG_API_BASE_URL = '/api/ai';
 
 const suggestedQuestions = [
   'Which universities are best for Computer Science in the US?',
@@ -47,10 +45,12 @@ export default function AIAdvisorPage() {
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${AI_RAG_API_BASE_URL}/api/chat`, {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ question: currentInput }),
       });

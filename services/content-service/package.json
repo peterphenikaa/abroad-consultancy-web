@@ -9,6 +9,7 @@
         "@elastic/elasticsearch": "^9.3.4",
         "@opensearch-project/opensearch": "^3.5.1",
         "@prisma/client": "^6.19.3",
+        "@radix-ui/react-accordion": "^1.2.12",
         "dotenv": "^16.4.5",
         "express": "^4.21.2",
         "kafkajs": "^2.2.4",

@@ -64,6 +64,49 @@ const CourseController = {
         } catch (error) {
             return sendError(res, error);
         }
+    },
+
+    getUserStats: async (req, res) => {
+        try {
+            const mockUserId = "11111111-1111-1111-1111-111111111111";
+            const stats = await courseService.getUserStats(mockUserId);
+            return res.status(200).json({
+                success: true,
+                data: stats
+            });
+        } catch (error) {
+            return sendError(res, error);
+        }
+    },
+
+    getMyActiveCourses: async (req, res) => {
+        try {
+            const mockUserId = "11111111-1111-1111-1111-111111111111";
+            const courses = await courseService.getMyActiveCourses(mockUserId);
+
+            return res.status(200).json({
+                success: true,
+                data: courses
+            });
+        } catch (error) {
+            return sendError(res, error);
+        }
+    },
+
+    getMilestones: async (req, res) => {
+        try {
+            const mockUserId = "11111111-1111-1111-1111-111111111111";
+            const milestones = await courseService.getMilestones(mockUserId);
+            return res.status(200).json({
+                success: true,
+                data: milestones
+            });
+        } catch (err) {
+            return res.status(err.statusCode || 500).json({ 
+                status: 'error',
+                error: err.message 
+            });
+        }
     }
 };
 

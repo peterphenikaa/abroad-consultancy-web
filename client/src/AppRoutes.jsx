@@ -2,13 +2,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Route, Routes, useLocation } from "react-router-dom";
 import LandingPage from "./components/LandingPage.jsx";
 import AIAdvisorPage from "./pages/AIAdvisorPage.jsx";
-import CoursesPage from "./pages/CoursesPage.jsx";
+import CoursesPage from "./pages/courses/CoursesPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import WritingScorePage from "./pages/WritingScorePage.jsx";
 import Navigation from "./components/Navigation.jsx";
+import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
+import QuizExecutionPage from "./pages/courses/QuizExecutionPage.jsx";
 
 const pageVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(2px)" },
@@ -19,9 +21,11 @@ const pageVariants = {
 export default function AppRoutes() {
   const location = useLocation();
 
+  const isCourseDetailPage = location.pathname.startsWith('/courses/') && location.pathname !== '/courses';
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Navigation />
+      {!isCourseDetailPage && <Navigation />}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={location.pathname}
@@ -40,10 +44,12 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/courses/:id" element={<CourseDetailPage />} />
+            <Route path="/courses/:courseId/quiz/:contentId/take" element={<QuizExecutionPage />} />
+
           </Routes>
         </motion.main>
       </AnimatePresence>
     </div>
   );
 }
-

@@ -2,7 +2,14 @@ import z from 'zod';
 import { logger } from '../../config/logger';
 import { NextFunction, Request, Response } from 'express';
 import { env } from '../../config/env';
-import { loginSchema, registerSchema } from './auth.scheme';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+  verifyResetTokenSchema,
+} from './auth.scheme';
 import { AuthService } from './auth.service';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
@@ -27,11 +34,12 @@ export class AuthController {
       // 6. Return success response or error
       logger.info(`User registered successfully: ${newUser.email}`);
       res.status(201).json({
-        message: 'User registered successfully',
+        message: 'User registered successfully! Please checks your email to verify your account',
         user: {
           id: newUser.id,
           email: newUser.email,
-          fullName: newUser.full_name,
+          fullName: newUser.fullName,
+          emailVerified: newUser.emailVerified,
         },
       });
     } catch (error) {
@@ -122,30 +130,111 @@ export class AuthController {
   }
 
   /**
-    * API for user logout
-    */
-    static async logout(req: Request, res: Response, next: NextFunction) {
-      try {
-        // 1. take refresh token from cookie
-        const rawRefreshToken = req.cookies?.refresh_token;
+   * API for user logout
+   */
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      // 1. take refresh token from cookie
+      const rawRefreshToken = req.cookies?.refresh_token;
 
-        // 2. if refresh token exists, logout (idempotent - always returns 200 OK)
-        if (rawRefreshToken) {
-          await AuthService.logout(rawRefreshToken);
-        }
-
-        // 3. delete cookie in client
-        res.clearCookie('refresh_token', {
-          httpOnly: true,
-          secure: env.COOKIE_SECURE,
-          domain: env.COOKIE_DOMAIN,
-          sameSite: 'strict',
-        });
-
-        // 4. return res (always success - already logged out if no token)
-        res.status(200).json({ message: 'Logged out successfully' });
-      } catch (error) {
-        next(error);
+      // 2. if refresh token exists, logout (idempotent - always returns 200 OK)
+      if (rawRefreshToken) {
+        await AuthService.logout(rawRefreshToken);
       }
+
+      // 3. delete cookie in client
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: env.COOKIE_SECURE,
+        domain: env.COOKIE_DOMAIN,
+        sameSite: 'strict',
+      });
+
+      // 4. return res (always success - already logged out if no token)
+      res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      next(error);
     }
+  }
+
+  /**
+   * Verify email with OTP
+   */
+  static async verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // 1. Validate request body using Zod
+      const parseResult = verifyEmailSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Email Verification Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      // 2. Call service to verify email
+      const result = await AuthService.verifyEmail(parseResult.data);
+
+      // 3. Return success response or error
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-1]
+   */
+  static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = forgotPasswordSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Forgot Password Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      const result = await AuthService.forgotPassword(parseResult.data);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-2]
+   */
+  static async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = verifyResetTokenSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Verify Reset Token Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      const result = await AuthService.verifyResetOtp(parseResult.data);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [RESET-3]
+   */
+  static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const parseResult = resetPasswordSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(
+          400,
+          'Verify Reset Password Validation Error',
+          'VALIDATION_ERROR',
+          errors,
+        );
+      }
+
+      const result = await AuthService.resetPassword(parseResult.data);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

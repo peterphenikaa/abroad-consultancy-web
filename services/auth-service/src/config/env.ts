@@ -18,15 +18,27 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.string().transform(Number).default(12),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL_DAYS: z.string().transform(Number).default(30),
+  RESET_PASSWORD_TOKEN_TTL_MINUTES: z.string().transform(Number).default(5),
 
   // Cookie config
   COOKIE_DOMAIN: z.string().default('localhost'),
-  COOKIE_SECURE: z.string().default('false').transform((val) => val === 'true'),
+  COOKIE_SECURE: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
 
   // JWT config
   JWT_PRIVATE_KEY: z.string().min(1, 'JWT_PRIVATE_KEY is required'),
   JWT_PUBLIC_KEY: z.string().min(1, 'JWT_PUBLIC_KEY is required'),
   JWT_KID: z.string().default('auth-service-key-v1'),
+
+  // Email (SMTP) config
+  // THÊM MỚI TỪ ĐÂY: Email (SMTP) config
+  SMTP_HOST: z.string().min(1, 'SMTP_HOST is required'),
+  SMTP_PORT: z.string().transform(Number).default(587),
+  SMTP_USER: z.string().min(1, 'SMTP_USER is required'),
+  SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
+  EMAIL_FROM: z.string().default('Cambridge Platform <noreply@cambridge-platform.com>'),
 });
 
 /**
