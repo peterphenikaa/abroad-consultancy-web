@@ -92,6 +92,30 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
+const aesWorkerUrl =
+  process.env.AES_SCORING_WORKER_URL || "http://127.0.0.1:8088";
+app.use(
+  "/api/v1/aes",
+  createProxyMiddleware({
+    target: aesWorkerUrl,
+    changeOrigin: true,
+    proxyTimeout: 120000,
+    timeout: 120000,
+    onError: (err, _req, res) => {
+      console.error(
+        `[Gateway Error] AES proxy to ${aesWorkerUrl} failed:`,
+        err.message,
+      );
+      if (!res.headersSent) {
+        res.status(502).json({
+          success: false,
+          message: "AES scoring worker is temporarily unavailable",
+        });
+      }
+    },
+  }),
+);
+
 app.use(authenticateJWT);
 
 const routes = {

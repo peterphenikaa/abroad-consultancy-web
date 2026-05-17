@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Search,
   BarChart3,
+  PenLine,
   Menu,
   X,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import {
 const navItems = [
   { path: "/", label: "Home", icon: Globe },
   { path: "/advisor", label: "AI Advisor", icon: Compass },
+  { path: "/writing-score", label: "Writing AES", icon: PenLine },
   { path: "/courses", label: "Courses", icon: GraduationCap },
   { path: "/payment", label: "Payment", icon: CreditCard },
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
