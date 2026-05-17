@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/api-error.util';
 import { prismaClient } from '../lib/prisma';
+import { AuthUser } from '../types/express';
 
 export const checkEmailVerified = async (
   req: Request,
@@ -9,10 +10,10 @@ export const checkEmailVerified = async (
 ): Promise<void> => {
   try {
     // 1. Take user info from request(token), assuming it's added by previous auth middleware
-    const userPayload = req.user;
-    const userId = userPayload?.userId;
+    const userPayload = req.user as AuthUser;
+    const userId = userPayload?.id;
 
-    if (!userPayload || !userPayload.userId) {
+    if (!userPayload || !userPayload.id) {
       throw new ApiError(
         401,
         'Unauthorized: User information is missing in the request',

@@ -2,6 +2,7 @@ import { Role } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 import { ApiError } from '../utils/api-error.util';
 import { ROLE_HIERARCHY, PERMISSIONS, PermissionType } from '../constants/roles';
+import { AuthUser } from '../types/express';
 
 type PermissionCheck =
   | { roles: Role[] }
@@ -11,7 +12,7 @@ type PermissionCheck =
 export function checkPermission(check: PermissionCheck) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = req.user as AuthUser;
 
       // validateToken
       if (!user) {
@@ -38,18 +39,19 @@ export function checkPermission(check: PermissionCheck) {
         }
       }
 
-       // permission check
-       if ('permission' in check && check.permission) {
-         const hasPermission =
-           user.permissions.includes(PERMISSIONS.ALL) || user.permissions.includes(check.permission);
-         if (!hasPermission) {
-           throw new ApiError(
-             403,
-             `Required permission: ${check.permission}`,
-             'INSUFFICIENT_PERMISSION',
-           );
-         }
-       }
+      // permission check
+      if ('permission' in check && check.permission) {
+        const hasPermission =
+          user.permissions.includes(PERMISSIONS.ALL as any) ||
+          user.permissions.includes(check.permission);
+        if (!hasPermission) {
+          throw new ApiError(
+            403,
+            `Required permission: ${check.permission}`,
+            'INSUFFICIENT_PERMISSION',
+          );
+        }
+      }
 
       next();
     } catch (error) {
