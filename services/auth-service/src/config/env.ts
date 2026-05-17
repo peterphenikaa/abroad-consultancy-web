@@ -2,6 +2,7 @@ import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs';
 import { z } from 'zod';
+import { parseDurationToSeconds } from '../utils/durationParse.utils';
 
 /**
  * 1. Define a Zod schema for environment variables, specifying types, default values, and validation rules. This ensures that all required environment variables are present and correctly formatted before the application starts.
@@ -121,4 +122,5 @@ export const env = {
   ..._env.data,
   JWT_PUBLIC_KEY: jwtPublicKey,
   JWT_PRIVATE_KEY: jwtPrivateKey,
+  ACCESS_TOKEN_TTL_SECONDS: parseDurationToSeconds(_env.data.ACCESS_TOKEN_TTL),
 } as const;
