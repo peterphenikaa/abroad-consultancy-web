@@ -7,6 +7,7 @@ import AppRoutes from './AppRoutes.jsx'
 import './styles/fonts.css'
 import './index.css'
 import axios from 'axios'
+import { syncServerTime, cleanupExpiredData } from './services/db'
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
@@ -15,6 +16,22 @@ axios.interceptors.request.use((config) => {
   }
   return config;
 });
+
+axios.interceptors.response.use((response) => {
+  if (response.headers && response.headers.date) {
+    const serverTime = new Date(response.headers.date).getTime();
+    if (!isNaN(serverTime)) syncServerTime(serverTime);
+  }
+  return response;
+}, (error) => {
+  if (error.response && error.response.headers && error.response.headers.date) {
+    const serverTime = new Date(error.response.headers.date).getTime();
+    if (!isNaN(serverTime)) syncServerTime(serverTime);
+  }
+  return Promise.reject(error);
+});
+
+cleanupExpiredData();
 
 const queryClient = new QueryClient();
 

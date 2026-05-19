@@ -157,6 +157,52 @@ const ContentService = {
         return content;
     },
 
+    getOfflineData: async (contentId) => {
+        const content = await prisma.contentItem.findUnique({
+            where: { contentId },
+            include: {
+                lesson: {
+                    include: {
+                        module: {
+                            include: {
+                                course: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!content) throw createError('Content not found!', 404);
+
+        const courseData = {
+            id: content.lesson.module.course.courseId,
+            title: content.lesson.module.course.title
+        };
+
+        const contentData = {
+            id: content.contentId,
+            courseId: courseData.id,
+            title: content.title,
+            description: content.description,
+            type: content.type,
+            metadata: content.metadata || {},
+            duration: content.duration,
+            contentUrl: content.contentUrl
+        };
+
+        const mediaUrls = [];
+        if (content.contentUrl) {
+            mediaUrls.push(content.contentUrl);
+        }
+
+        return {
+            courseData,
+            contentData,
+            mediaUrls
+        };
+    },
+
     getQuizOverview: async (contentId, userId) => {
         const content = await prisma.contentItem.findUnique({
             where: { contentId },
@@ -248,6 +294,27 @@ const ContentService = {
             where: { userId, contentId }
         });
         return { ...attempt, totalAttempts };
+    },
+
+    getContentOfflineData: async (contentId) => {
+        const content = await prisma.contentItem.findUnique({
+            where: { contentId },
+        });
+        if (!content) throw createError('Content not found!', 404);
+        return {
+            courseData: {
+                courseId: content.lesson.courseId,
+                courseTitle: content.lesson.course.title,
+            },
+            contentData: {
+                contentId: content.contentId,
+                courseId: content.lesson.courseId,
+                title: content.title,
+                bodyText: content.description,
+                type: content.type,
+            },
+            mediaUrls: [content.contentUrl]
+        }
     }
 };
 
