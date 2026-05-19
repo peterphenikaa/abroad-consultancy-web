@@ -67,6 +67,16 @@ const ContentController = {
         }
     },
 
+    getOfflineData: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const data = await contentService.getOfflineData(id);
+            return res.status(200).json(data);
+        } catch (error) {
+            return sendError(res, error);
+        }
+    },
+
     finalizeUpload: async (req, res) => {
         try {
             const content = await contentService.finalizeContentUpload(req.body);
@@ -74,7 +84,7 @@ const ContentController = {
         } catch (error) {
             return sendError(res, error);
         }
-    },  
+    },
 
     getQuizOverview: async (req, res) => {
         try {
@@ -85,13 +95,13 @@ const ContentController = {
         } catch (error) {
             return sendError(res, error);
         }
-    }, 
+    },
 
     submitQuiz: async (req, res) => {
         try {
             const { id } = req.params;
             const answers = req.body.answers;
-            const timeTaken = req.body.timeTaken || 0; 
+            const timeTaken = req.body.timeTaken || 0;
             const userId = req.userId ? req.userId : "11111111-1111-1111-1111-111111111111";
             const result = await contentService.submitQuiz(id, userId, answers, timeTaken);
             return res.status(200).json({ status: 'success', data: result });

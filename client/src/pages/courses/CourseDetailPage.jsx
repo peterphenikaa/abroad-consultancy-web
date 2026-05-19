@@ -38,6 +38,7 @@ export default function CourseDetailPage() {
   const [activeLesson, setActiveLesson] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [courseData, setCourseData] = useState(null);
 
   useEffect(() => {
     const fetchCourse = async () => {

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { ArrowRight } from "lucide-react";
+import DownloadButton from "../../../components/ui/DownloadButton";
 
 export function LessonHeader({ activeContentItem, onNextLesson, onReportIssue }) {
     if (!activeContentItem) return null;
@@ -19,14 +20,15 @@ export function LessonHeader({ activeContentItem, onNextLesson, onReportIssue })
                         {activeContentItem.type}
                     </Badge>
                     <span>
-                        {activeContentItem.duration 
-                            ? `${Math.floor(activeContentItem.duration / 60)}:${Math.floor(activeContentItem.duration % 60).toString().padStart(2, '0')}` 
+                        {activeContentItem.duration
+                            ? `${Math.floor(activeContentItem.duration / 60)}:${Math.floor(activeContentItem.duration % 60).toString().padStart(2, '0')}`
                             : '00:00'}
                     </span>
                 </div>
             </div>
 
             <div className="flex items-center gap-4">
+                <DownloadButton contentId={activeContentItem.id} />
                 <Button className="rounded-full px-6 bg-[#F59E0B] hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={onNextLesson}
                     disabled={!isCompleted}
