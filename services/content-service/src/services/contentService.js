@@ -27,8 +27,19 @@ const ContentService = {
                 orderIndex: contentData.orderIndex
             }
         });
+
+        const warnings = [];
+        if (contentData.type === 'QUIZ' && contentData.metadata?.questions) {
+            for (const q in contentData.metadata?.questions) {
+                const question = contentData.metadata?.questions[q];
+                if (!question.skillTags || !Array.isArray(question.skillTags) || question.skillTags.length === 0) {
+                    warnings.push(`Câu hỏi '${question.id || q}' đang thiếu skillTag`);
+                }
+            }
+        }
+
         if (existingContent) throw createError('Content order already exists!', 409);
-        return await prisma.contentItem.create({
+        const result = await prisma.contentItem.create({
             data: {
                 lessonId: contentData.lessonId,
                 type: contentData.type,
@@ -40,6 +51,11 @@ const ContentService = {
                 status: 'DRAFT',
             }
         });
+
+        return {
+            ...result,
+            warnings: warnings.length > 0 ? warnings : null
+        };
     },
 
     finalizeContentUpload: async (payload) => {
@@ -100,10 +116,27 @@ const ContentService = {
         if (Object.keys(safeData).length === 0) {
             throw createError("No valid fields to update", 400);
         }
-        return await prisma.contentItem.update({
+
+        const warnings = [];
+        if (safeData.type === 'QUIZ' || (currentContent.type === 'QUIZ' && safeData.metadata?.questions)) {
+            const questions = safeData.metadata?.questions || currentContent.metadata?.questions || [];
+            for (const q in questions) {
+                const question = questions[q];
+                if (!question.skillTags || !Array.isArray(question.skillTags) || question.skillTags.length === 0) {
+                    warnings.push(`Câu hỏi '${question.id || q}' đang thiếu skillTag`);
+                }
+            }
+        }
+
+        const result = await prisma.contentItem.update({
             where: { contentId },
             data: { ...safeData, status: statusUpdate }
         });
+
+        return {
+            ...result,
+            warnings: warnings.length > 0 ? warnings : null
+        };
     },
 
     deleteContent: async (contentId) => {
@@ -315,7 +348,8 @@ const ContentService = {
             },
             mediaUrls: [content.contentUrl]
         }
-    }
+    },
+
 };
 
 module.exports = ContentService;

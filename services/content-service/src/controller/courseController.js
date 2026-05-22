@@ -1,9 +1,5 @@
 const courseService = require('../services/courseService');
-
-function sendError(res, error) {
-    const status = error.statusCode || 500;
-    return res.status(status).json({ error: error.message });
-}
+const { sendError } = require('../utils/appError');
 
 const CourseController = {
     createCourse: async (req, res) => {

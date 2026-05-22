@@ -14,4 +14,4 @@ router.get('/:id/offline', ContentController.getOfflineData);
 router.post('/:id/submit', ContentController.submitQuiz);
 router.get('/:id/quiz-overview', ContentController.getQuizOverview);
 
-module.exports = router;
+module.exports = router; 
