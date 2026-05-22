@@ -3,6 +3,7 @@ const courseRoutes = require('./routes/courseRoute');
 const moduleRoutes = require('./routes/moduleRoute');
 const contentRoutes = require('./routes/contentRoute');
 const lessonRoutes = require('./routes/lessonRoute');
+const skillTagRoutes = require('./routes/skillTagRoute');
 
 require('dotenv').config();
 
@@ -13,6 +14,7 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/modules', moduleRoutes);
 app.use('/api/v1/contents', contentRoutes);
+app.use('/api/v1/skill-tags', skillTagRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
