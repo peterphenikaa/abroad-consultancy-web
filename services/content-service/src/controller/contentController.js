@@ -1,16 +1,12 @@
 const storageService = require('../services/storageService');
 const contentService = require('../services/contentService');
-
-function sendError(res, error) {
-    const status = error.statusCode || 500;
-    return res.status(status).json({ error: error.message });
-}
+const { sendError } = require('../utils/appError');
 
 const ContentController = {
     createContent: async (req, res) => {
         try {
             const content = await contentService.createContent(req.body);
-            res.status(201).json(content);
+            res.status(201).json({ status: 'success', data: content, warnings: content.warnings });
         } catch (error) {
             return sendError(res, error);
         }
@@ -20,7 +16,7 @@ const ContentController = {
         try {
             const { id } = req.params;
             const content = await contentService.updateContent(id, req.body);
-            res.status(200).json(content);
+            res.status(200).json({ status: 'success', data: content, warnings: content.warnings });
         } catch (error) {
             return sendError(res, error);
         }
@@ -30,7 +26,7 @@ const ContentController = {
         try {
             const { id } = req.params;
             await contentService.deleteContent(id);
-            return res.status(204).send();
+            return res.status(204).json({ status: 'success', message: 'Content deleted successfully' });
         } catch (error) {
             return sendError(res, error);
         }
@@ -39,7 +35,7 @@ const ContentController = {
     getUploadUrl: async (req, res) => {
         try {
             const payload = await storageService.getUploadUrl(req.body);
-            return res.status(200).json(payload);
+            return res.status(200).json({ status: 'success', data: payload });
         } catch (error) {
             return sendError(res, error);
         }
@@ -51,7 +47,7 @@ const ContentController = {
             const safeLimit = Math.max(1, Number(req.query.limit) || 10);
             const lessonId = req.query.lessonId;
             const result = await contentService.getAllContent({ lessonId, page: safePage, limit: safeLimit });
-            return res.status(200).json(result);
+            return res.status(200).json({ status: 'success', data: result });
         } catch (error) {
             return sendError(res, error);
         }
@@ -61,7 +57,7 @@ const ContentController = {
         try {
             const { id } = req.params;
             const content = await contentService.getContentById(id);
-            return res.status(200).json(content);
+            return res.status(200).json({ status: 'success', data: content });
         } catch (error) {
             return sendError(res, error);
         }
@@ -71,7 +67,7 @@ const ContentController = {
         try {
             const { id } = req.params;
             const data = await contentService.getOfflineData(id);
-            return res.status(200).json(data);
+            return res.status(200).json({ status: 'success', data: data });
         } catch (error) {
             return sendError(res, error);
         }
@@ -80,7 +76,7 @@ const ContentController = {
     finalizeUpload: async (req, res) => {
         try {
             const content = await contentService.finalizeContentUpload(req.body);
-            return res.status(201).json(content);
+            return res.status(201).json({ status: 'success', data: content });
         } catch (error) {
             return sendError(res, error);
         }
@@ -108,7 +104,8 @@ const ContentController = {
         } catch (error) {
             return sendError(res, error);
         }
-    }
+    },
+
 };
 
 module.exports = ContentController;
