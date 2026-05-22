@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-ignore
 import '@mdxeditor/editor/style.css';
 import {
     MDXEditor,
@@ -18,7 +19,12 @@ import {
     InsertTable
 } from '@mdxeditor/editor';
 
-export function MarkdownEditor({ markdown, onChange }) {
+interface MarkdownEditorProps {
+    markdown: string;
+    onChange: (markdown: string) => void;
+}
+
+export function MarkdownEditor({ markdown, onChange }: MarkdownEditorProps) {
     return (
         <div className="border border-neutral-200 rounded-xl overflow-hidden bg-white">
             <MDXEditor

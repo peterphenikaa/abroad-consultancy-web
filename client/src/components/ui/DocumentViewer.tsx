@@ -2,7 +2,11 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export function DocumentViewer({ content }) {
+interface DocumentViewerProps {
+    content: string;
+}
+
+export function DocumentViewer({ content }: DocumentViewerProps) {
     if (!content) return null;
     return (
         <div className="prose prose-neutral max-w-none">
