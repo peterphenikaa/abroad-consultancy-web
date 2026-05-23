@@ -65,6 +65,7 @@ services:
       - postgres
     networks:
       - cambridge_net
+      - app-network
 
 volumes:
   pgdata:
@@ -72,3 +73,6 @@ volumes:
 networks:
   cambridge_net:
     driver: bridge
+  app-network:
+    external: true
+    name: app-network

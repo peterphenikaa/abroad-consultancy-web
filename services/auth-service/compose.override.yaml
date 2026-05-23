@@ -14,3 +14,9 @@ services:
         npx prisma db push &&
         npm run dev
       "
+    networks:
+      cambridge_net: {}
+      app-network:
+        # local dns
+        aliases:
+          - cambridge-auth-service
