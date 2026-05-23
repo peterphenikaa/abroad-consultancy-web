@@ -3,7 +3,8 @@
 services:
   auth-service:
     ports:
-      - '5555:5555'
+      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
+      - '5555:5555' # port for prisma studio
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
