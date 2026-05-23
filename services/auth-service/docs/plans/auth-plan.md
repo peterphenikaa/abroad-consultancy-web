@@ -83,8 +83,8 @@
 - [x] Middleware: `validateToken`, `checkPermission` (RBAC)
 - [ ] Tích hợp AWS SES (Email) và Twilio (SMS)
 - [x] Logic OTP: sinh mã 6 chữ số, lưu Redis với TTL 10 phút
-- [ ] `GET /users/me`: lấy thông tin profile
-- [ ] API cập nhật profile cơ bản
+- [x] `GET /users/me`: lấy thông tin profile
+- [x] API cập nhật profile cơ bản
 
 ### Phase 4: SSO, 2FA & Bảo Mật Nâng Cao (Tuần 3)
 

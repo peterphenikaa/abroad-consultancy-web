@@ -1,3 +1,4 @@
+import { User } from '@prisma/client';
 import z from 'zod';
 import { logger } from '../../config/logger';
 import { NextFunction, Request, Response } from 'express';
@@ -82,7 +83,7 @@ export class AuthController {
       res.status(200).json({
         access_token: result.accessToken,
         token_type: 'Bearer',
-        expires_in: env.ACCESS_TOKEN_TTL,
+        expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
         user: {
           id: result.user.id,
           email: result.user.email,
@@ -122,7 +123,7 @@ export class AuthController {
       res.status(200).json({
         access_token: result.newAccessToken,
         token_type: 'Bearer',
-        expires_in: env.ACCESS_TOKEN_TTL,
+        expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
       });
     } catch (error) {
       next(error);
@@ -235,6 +236,56 @@ export class AuthController {
       res.status(200).json(result);
     } catch (error) {
       next(error);
+    }
+  }
+
+  // --- Google OAuth SSO ---
+  /**
+   * API for Google SSO Callback
+   */
+  static async googleCallBack(req: Request, res: Response): Promise<void> {
+    try {
+      // Passport will auto attach user info, we cast it to User since we know Passport puts the DB record here
+      const user = req.user as unknown as User;
+
+      if (!user) {
+        logger.warn('Google OAuth callback called without user info');
+        res.redirect(`${env.FRONTEND_OAUTH_SUCCESS_URL}?error=unauthorized`);
+        return;
+      }
+
+      // add ip and device info for better session management and security monitoring
+      const ip = req.ip || req.socket.remoteAddress;
+      const devicesInfo = req.headers['user-agent'] || 'Unknown Device';
+      const context: ClientContext = { ip: ip, userAgent: devicesInfo };
+
+      // call google login in service
+      const result = await AuthService.googleLogin(user, context);
+
+      // Attach refresh token in HttpOnly cookie
+      res.cookie('refresh_token', result.rawRefreshToken, {
+        httpOnly: true,
+        secure: env.COOKIE_SECURE,
+        domain: env.COOKIE_DOMAIN,
+        sameSite: 'lax', // Use 'lax' or 'none' for OAuth callbacks depending on cross-domain requirements
+        maxAge: result.expiresInDay * 24 * 60 * 60 * 1000,
+      });
+
+      // Redirect to frontend with the access token
+      // WARNING: Passing token in URL hash is common but consider more secure alternatives (like secure cookies) for production
+      const redirectUrl = `${env.FRONTEND_OAUTH_SUCCESS_URL}#access_token=${result.accessToken}&expires_in=${env.ACCESS_TOKEN_TTL_SECONDS}`;
+
+      logger.info(`User logged in via Google successfully: ${result.user.email}`);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      logger.error({ err: error }, 'Google OAuth callback failed');
+
+      if (error instanceof ApiError) {
+        // transfer true err code
+        return res.redirect(`${env.FRONTEND_OAUTH_SUCCESS_URL}?error=${error.code}`);
+      }
+
+      res.redirect(`${env.FRONTEND_OAUTH_SUCCESS_URL}?error=server_error`);
     }
   }
 }
