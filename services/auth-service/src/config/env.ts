@@ -2,6 +2,7 @@ import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs';
 import { z } from 'zod';
+import { parseDurationToSeconds } from '../utils/durationParse.utils';
 
 /**
  * 1. Define a Zod schema for environment variables, specifying types, default values, and validation rules. This ensures that all required environment variables are present and correctly formatted before the application starts.
@@ -39,6 +40,12 @@ const envSchema = z.object({
   SMTP_USER: z.string().min(1, 'SMTP_USER is required'),
   SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
   EMAIL_FROM: z.string().default('Cambridge Platform <noreply@cambridge-platform.com>'),
+
+  // Google OAuth SSO config
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
+  GOOGLE_CALLBACK_URL: z.url('GOOGLE_CALLBACK_URL must be a valid URL'),
+  FRONTEND_OAUTH_SUCCESS_URL: z.url('FRONTEND_OAUTH_SUCCESS_URL must be a valid URL'),
 });
 
 /**
@@ -115,4 +122,5 @@ export const env = {
   ..._env.data,
   JWT_PUBLIC_KEY: jwtPublicKey,
   JWT_PRIVATE_KEY: jwtPrivateKey,
+  ACCESS_TOKEN_TTL_SECONDS: parseDurationToSeconds(_env.data.ACCESS_TOKEN_TTL),
 } as const;

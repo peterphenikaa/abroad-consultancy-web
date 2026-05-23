@@ -6,17 +6,36 @@ services:
       - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
       - '5555:5555' # port for prisma studio
     volumes:
-      - ./:/usr/src/app
+      - .:/usr/src/app
       - /usr/src/app/node_modules
     command: >
       sh -c "
+        npm install &&
         npx prisma generate &&
-        npx prisma db push &&
         npm run dev
       "
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - '${PGADMIN_PORT}:80'
+    depends_on:
+      - postgres
     networks:
-      cambridge_net: {}
-      app-network:
-        # local dns
-        aliases:
-          - cambridge-auth-service
+      - cambridge_net
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight_container
+    ports:
+      - '5540:5540'
+    environment:
+      TZ: ${TZ}
+    depends_on:
+      - redis
+    networks:
+      - cambridge_net

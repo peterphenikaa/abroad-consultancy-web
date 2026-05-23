@@ -2,7 +2,7 @@ import { Role } from '@prisma/client';
 import { PermissionType } from '../constants/permission.constant';
 
 export interface AuthUser {
-  userId: string;
+  id: string;
   email: string;
   role: Role;
   orgId?: string;

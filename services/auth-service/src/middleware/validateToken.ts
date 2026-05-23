@@ -48,7 +48,7 @@ export async function validateToken(
 
     // 5. attach user info to req
     const authUser: AuthUser = {
-      userId: payload.sub,
+      id: payload.sub,
       email: payload.email,
       role,
       orgId: payload.orgId,
