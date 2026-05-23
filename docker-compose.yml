@@ -44,30 +44,9 @@ services:
     networks:
       - app-network
 
-  kong-redis:
-    image: redis:7-alpine
-    container_name: cambridge-kong-redis
-    ports:
-      - "6380:6379"
-    networks:
-      - app-network
-
   # ==========================================
   # ⚙️ MICROSERVICES
   # ==========================================
-  api-gateway:
-    build: ./api-gateway
-    env_file: .env
-    environment:
-      - PORT=8080
-      - CONTENT_SERVICE_URL=http://content-service:3000
-    ports:
-      - "8081:8080"
-    depends_on:
-      - auth-service
-      - user-service
-    networks:
-      - app-network
 
   user-service:
     build: ./services/user-service

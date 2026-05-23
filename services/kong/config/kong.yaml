@@ -1,0 +1,9 @@
+_format_version: "3.0"
+
+services:
+  - name: mock-service
+    url: http://localhost:8000
+    routes:
+      - name: health-check
+        paths:
+          - /health

@@ -22,13 +22,18 @@ auth: network
 	@echo "- Starting auth service..."
 	@cd services/auth-service && docker compose up -d
 
+kong: network
+	@echo "- Starting kong-api_gateway service..."
+	@cd services/kong && docker compose up -d
+
+
 app: network
 	@echo "- Starting app ..."
 	@docker compose up -d
 
 # 3. system 
 
-up: app auth
+up: app kong auth
 	@echo "- [SUCCESS] All services are up and running!"
 
 down: 
@@ -38,8 +43,8 @@ down:
 	@echo "- Stopped all Services!"
 
 logs:
-	@echo "- Tailing logs for Root App and Auth Service..."
-	@docker logs -f cambridge_auth_service
+	@echo "- Tailing logs for Auth Service and Kong Gateway..."
+	@docker logs -f cambridge_auth_service cambridge_kong_gateway
 
 clean: down
 	@echo "- Cleaning up system (rm unused networks/volumes)..."
