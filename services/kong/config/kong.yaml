@@ -22,6 +22,12 @@ plugins:
           - "X-XSS-Protection:0"
           - "Strict-Transport-Security:max-age=31536000; includeSubDomains"
 
+  - name: ip-restriction
+    enabled: true
+    config:
+      allow:
+        - ["0.0.0.0/0"] # turn on for all IPs, adjust as needed for production
+
 services:
   - name: mock-service
     url: http://localhost:8000
