@@ -8,7 +8,8 @@ import { JwtPayLoad, JwtResetPayLoad } from '../types/auth.type';
 export const signAccessToken = (payload: JwtPayLoad): string => {
   const options: SignOptions = {
     algorithm: 'RS256',
-    expiresIn: env.ACCESS_TOKEN_TTL as SignOptions['expiresIn'], // e.g., '15m' for 15 minutes
+    expiresIn: env.ACCESS_TOKEN_TTL as SignOptions['expiresIn'],
+    issuer: 'cambridge-api',
   };
 
   return jwt.sign(payload, env.JWT_PRIVATE_KEY, options);
