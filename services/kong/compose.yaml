@@ -63,6 +63,14 @@ services:
     networks:
       - app-network
 
+  swagger-nginx:
+    image: nginx:alpine
+    container_name: cambridge-kong-swagger
+    volumes:
+      - ./swagger:/usr/share/nginx/html:ro
+    networks:
+      - app-network
+
 networks:
   app-network:
     external: true
