@@ -53,7 +53,7 @@ services:
       - name: auth-route
         paths:
           - /api/auth
-        strip_path: false
+        strip_path: true
 
   # AI rag service
   - name: ai-rag-service
