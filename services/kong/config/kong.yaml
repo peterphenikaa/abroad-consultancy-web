@@ -86,6 +86,19 @@ services:
           - /api/search
         strip_path: false
 
+  # Swagger Docs
+  - name: swagger-docs
+    url: http://swagger-nginx:80
+    routes:
+      - name: swagger-ui
+        paths:
+          - /docs
+        strip_path: false
+      - name: swagger-spec
+        paths:
+          - /swagger.json
+        strip_path: false
+
   # Mock Stub Services
   # Gom chung các dịch vụ chưa implement vào một rule để dễ quản lý
   - name: stub-services
