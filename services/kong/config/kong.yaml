@@ -55,17 +55,6 @@ services:
           - /api/auth
         strip_path: true
 
-  # AI rag service
-  - name: ai-rag-service
-    host: ai-rag-service
-    port: 3003
-    routes:
-      - name: ai-rag-routes
-        paths:
-          - /api/ai/chat
-          - /api/ai/sync-rag
-        strip_path: true
-
   # Content Service
   - name: content-service
     host: content-service
@@ -109,6 +98,7 @@ services:
           - /api/payments
           - /api/notifications
           - /api/analytics
+          - /api/ai
     plugins:
       - name: request-termination
         config:
