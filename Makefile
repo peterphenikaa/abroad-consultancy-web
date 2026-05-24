@@ -39,6 +39,7 @@ up: app kong auth
 down: 
 	@echo "- Stopping all Services.."
 	@cd services/auth-service && docker compose down
+	@cd services/kong && docker compose down
 	@docker compose down
 	@echo "- Stopped all Services!"
 

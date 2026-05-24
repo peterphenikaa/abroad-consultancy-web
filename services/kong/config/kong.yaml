@@ -1,9 +1,138 @@
 _format_version: "3.0"
 
+# 1. Global plugins
+plugins:
+  - name: cors
+    enabled: true
+    config:
+      origins: ["*"]
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+      headers: ["Authorization", "Content-Type", "Accept"]
+      exposed_headers: ["Set-Cookie"]
+      credentials: true
+      max_age: 3600
+
+  # Cấu hình Global Rate Limiting (Sử dụng Redis)
+  - name: rate-limiting
+    enabled: true
+    config:
+      second: 5 # Giới hạn 5 request/giây
+      hour: 1000 # Giới hạn 1000 request/giờ
+      policy: redis # Bắt buộc dùng Redis
+      redis_host: kong-redis
+      redis_port: 6379
+
+  - name: response-transformer
+    enabled: true
+    config:
+      add:
+        headers:
+          - "X-Content-Type-Options:nosniff"
+          - "X-Frame-Options:DENY"
+          - "X-XSS-Protection:0"
+          - "Strict-Transport-Security:max-age=31536000; includeSubDomains"
+
+  - name: ip-restriction
+    enabled: true
+    config:
+      allow:
+        - "0.0.0.0/0" # turn on for all IPs, adjust as needed for production
+
+# 2. Services and Routes
 services:
-  - name: mock-service
-    url: http://localhost:8000
+  # Global Health Check Endpoint
+  # Sử dụng plugin request-termination để trả về 200 OK ngay tại Gateway
+  - name: gateway-health
+    url: http://localhost:8000 # Dummy URL, plugin sẽ chặn trước khi gọi
     routes:
-      - name: health-check
+      - name: health-route
         paths:
           - /health
+    plugins:
+      - name: request-termination
+        config:
+          status_code: 200
+          content_type: application/json; charset=utf-8
+          body: '{"status": "OK", "service": "Kong Gateway", "message": "Gateway is routing traffic successfully."}'
+
+  # Auth service
+  - name: auth-service
+    host: cambridge-auth-service
+    port: 3001
+    routes:
+      - name: auth-route
+        paths:
+          - /api/auth
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          second: 10
+          hour: 1000
+          policy: redis
+          redis_host: kong-redis
+          redis_port: 6379
+
+  # Content Service
+  - name: content-service
+    host: content-service
+    port: 3000
+    routes:
+      - name: content-routes
+        paths:
+          - /api/content
+          - /api/v1
+        strip_path: false
+
+  # User Service
+  - name: user-service
+    host: user-service
+    port: 3002
+    routes:
+      - name: user-routes
+        paths:
+          - /api/users
+        strip_path: false
+
+  # Search Service
+  - name: search-service
+    host: search-service
+    port: 3007
+    routes:
+      - name: search-routes
+        paths:
+          - /api/search
+        strip_path: false
+
+  # Swagger Docs
+  - name: swagger-docs
+    url: http://swagger-nginx:80
+    routes:
+      - name: swagger-ui
+        paths:
+          - /docs
+        strip_path: false
+      - name: swagger-spec
+        paths:
+          - /swagger.json
+        strip_path: false
+
+  # Mock Stub Services
+  # Gom chung các dịch vụ chưa implement vào một rule để dễ quản lý
+  - name: stub-services
+    url: http://localhost:8000 # Dummy URL
+    routes:
+      - name: stub-routes
+        paths:
+          - /api/exams
+          - /api/quizzes
+          - /api/payments
+          - /api/notifications
+          - /api/analytics
+          - /api/ai
+    plugins:
+      - name: request-termination
+        config:
+          status_code: 503
+          content_type: application/json; charset=utf-8
+          body: '{"success": false, "message": "Service not yet implemented. Please check back later."}'

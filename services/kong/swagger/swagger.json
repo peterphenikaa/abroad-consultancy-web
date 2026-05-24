@@ -1,0 +1,935 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Cambridge Education Platform - API Documentation",
+    "version": "1.0.0",
+    "description": "\n# Cambridge Education Platform API\n\nConsolidated API documentation for all microservices.\n\n## Base URL\n```\nhttp://localhost:8081/api\n```\n\n## Authentication\nProtected endpoints require a valid JWT Bearer token:\n```\nAuthorization: Bearer <your_jwt_token>\n```\n\n## Public vs Protected Routes\n- **Public routes** do NOT require JWT authentication\n- **Protected routes** require JWT token in the `Authorization` header\n    "
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081/api",
+      "description": "API Gateway (via Kong)"
+    }
+  ],
+  "paths": {
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Auth - Email Verification"
+        ],
+        "summary": "Verify user email with OTP",
+        "description": "Verifies a user's email address using a 6-digit OTP.\n\n**Public endpoint - No authentication required**\n\nThis endpoint is typically called after registration. The user receives an OTP via email and uses it here to confirm their email address.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "otp": "123456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid OTP",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Email Verification Validation Error",
+                  "code": "VALIDATION_ERROR",
+                  "errors": {
+                    "email": [
+                      "Invalid email address"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found or OTP expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "User not found",
+                  "code": "NOT_FOUND"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth - Password Reset"
+        ],
+        "summary": "Request password reset via email",
+        "description": "Initiates password reset by sending a 6-digit OTP to the registered email.\n\n**Public endpoint - No authentication required**\n\nThe user must provide a valid email. If the email exists in the system, an OTP will be sent. For security reasons, this endpoint always returns 200 OK even if email doesn't exist (prevents user enumeration).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              },
+              "example": {
+                "email": "user@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully (or silently ignored if email doesn't exist)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (invalid email format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Forgot Password Validation Error",
+                  "code": "VALIDATION_ERROR",
+                  "errors": {
+                    "email": [
+                      "Invalid email address"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password/verify-otp": {
+      "post": {
+        "tags": [
+          "Auth - Password Reset"
+        ],
+        "summary": "Verify OTP and get reset token",
+        "description": "Verifies the OTP sent via forgot-password endpoint and returns a one-time reset token.\n\n**Public endpoint - No authentication required**\n\nThe reset token is valid for 15 minutes and must be used with the `/reset-password` endpoint to complete password reset.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordVerifyOtpRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "otp": "123456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordVerifyOtpResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid OTP",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Verify Reset Token Validation Error",
+                  "code": "VALIDATION_ERROR",
+                  "errors": {
+                    "otp": [
+                      "OTP must be exactly 6 characters long"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found or OTP expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "OTP expired or invalid",
+                  "code": "NOT_FOUND"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth - Password Reset"
+        ],
+        "summary": "Reset password with token",
+        "description": "Completes the password reset process using the reset token from verify-otp.\n\n**Public endpoint - No authentication required**\n\nAfter successful password reset, the user can log in with their new password.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              },
+              "example": {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "newPassword": "NewSecurePassword123!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Verify Reset Password Validation Error",
+                  "code": "VALIDATION_ERROR",
+                  "errors": {
+                    "newPassword": [
+                      "New password must be at least 8 characters long"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token invalid or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Get current user profile",
+        "description": "Retrieves the complete profile of the authenticated user.\n\n**Protected endpoint - Requires Bearer token**\n\nReturns user information along with profile details (bio, avatar, educational level, learning goals).\n",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserWithProfile"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "email": "user@example.com",
+                    "fullName": "John Doe",
+                    "role": "USER",
+                    "emailVerified": true,
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-20T15:45:00Z",
+                    "profile": {
+                      "bio": "Full-stack developer",
+                      "avatarUrl": "https://cdn.example.com/avatars/user123.jpg",
+                      "educationalLevel": "Bachelor's in CS",
+                      "learningGoals": "Master microservices"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Token không hợp lệ hoặc đã hết hạn",
+                  "code": "UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Update current user profile",
+        "description": "Updates the profile of the authenticated user.\n\n**Protected endpoint - Requires Bearer token**\n\nAll fields are optional. Only provide fields you want to update. The response includes the complete updated profile.\n",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              },
+              "example": {
+                "fullName": "John Doe Updated",
+                "bio": "Senior backend engineer",
+                "avatarUrl": "https://cdn.example.com/avatars/user123-v2.jpg",
+                "educationalLevel": "Master's in Software Engineering",
+                "learningGoals": "Advanced system design patterns"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProfileResponse"
+                },
+                "example": {
+                  "message": "Profile updated successfully",
+                  "data": {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "email": "user@example.com",
+                    "fullName": "John Doe Updated",
+                    "role": "USER",
+                    "emailVerified": true,
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-20T16:00:00Z",
+                    "profile": {
+                      "bio": "Senior backend engineer",
+                      "avatarUrl": "https://cdn.example.com/avatars/user123-v2.jpg",
+                      "educationalLevel": "Master's in Software Engineering",
+                      "learningGoals": "Advanced system design patterns"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Update Profile Validation Error",
+                  "code": "VALIDATION_ERROR",
+                  "errors": {
+                    "avatarUrl": [
+                      "Invalid URL format for avatar"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "tags": [
+          "Profile - Admin"
+        ],
+        "summary": "Get user profile by ID (Admin only)",
+        "description": "Retrieves profile information of any user by their ID.\n\n**Protected endpoint - Requires Bearer token with SUPER_ADMIN role**\n\nThis endpoint is restricted to administrators only. Regular users cannot access other users' profiles through this endpoint.\n",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Target user ID",
+            "example": "550e8400-e29b-41d4-a716-446655440111"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserWithProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is not an admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                },
+                "example": {
+                  "success": false,
+                  "message": "You do not have permission to access this resource",
+                  "code": "FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "User not found",
+                  "code": "NOT_FOUND"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer token from login response"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role",
+          "emailVerified",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique user identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "User full name",
+            "example": "John Doe"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN",
+              "SUPER_ADMIN"
+            ],
+            "description": "User role",
+            "example": "USER"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Email verification status",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last account update timestamp",
+            "example": "2024-01-15T10:30:00Z"
+          }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "bio": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "User biography",
+            "example": "Full-stack developer interested in microservices"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to user avatar image",
+            "example": "https://cdn.example.com/avatars/user123.jpg"
+          },
+          "educationalLevel": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Educational background",
+            "example": "Bachelor's in Computer Science"
+          },
+          "learningGoals": {
+            "type": "string",
+            "description": "User's learning objectives",
+            "example": "Master cloud architecture and DevOps"
+          }
+        }
+      },
+      "UserWithProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "profile": {
+                "$ref": "#/components/schemas/UserProfile"
+              }
+            }
+          }
+        ]
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "otp"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "description": "6-digit OTP sent to email",
+            "example": "123456"
+          }
+        }
+      },
+      "VerifyEmailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Email verified successfully"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Registered email address",
+            "example": "user@example.com"
+          }
+        }
+      },
+      "ForgotPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "OTP sent to your email. Please check your inbox."
+          }
+        }
+      },
+      "ResetPasswordVerifyOtpRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "otp"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "description": "6-digit OTP from forgot-password email",
+            "example": "123456"
+          }
+        }
+      },
+      "ResetPasswordVerifyOtpResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "OTP verified successfully"
+          },
+          "resetToken": {
+            "type": "string",
+            "description": "One-time token to reset password. Valid for 15 minutes.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": [
+          "token",
+          "newPassword"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Reset token from verify-otp response",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "description": "New password (minimum 8 characters)",
+            "example": "NewSecurePassword123!"
+          }
+        }
+      },
+      "ResetPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Password reset successfully"
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "description": "All fields are optional. Provide only fields you want to update.",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "User full name",
+            "example": "John Doe Updated"
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "User biography",
+            "example": "Senior backend engineer"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to user avatar",
+            "example": "https://cdn.example.com/avatars/user123-v2.jpg"
+          },
+          "educationalLevel": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Educational background",
+            "example": "Master's in Software Engineering"
+          },
+          "learningGoals": {
+            "type": "string",
+            "description": "Learning objectives",
+            "example": "Advanced system design patterns"
+          }
+        }
+      },
+      "UpdateProfileResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Profile updated successfully"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserWithProfile"
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Email Verification Validation Error"
+          },
+          "code": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "errors": {
+            "type": "object",
+            "description": "Field-level validation errors",
+            "properties": {
+              "email": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "Invalid email address"
+                ]
+              },
+              "otp": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "OTP must be exactly 6 characters long"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Resource not found"
+          },
+          "code": {
+            "type": "string",
+            "example": "NOT_FOUND"
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "code": {
+            "type": "string",
+            "example": "UNAUTHORIZED"
+          }
+        }
+      },
+      "ForbiddenError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "You do not have permission to access this resource"
+          },
+          "code": {
+            "type": "string",
+            "example": "FORBIDDEN"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth - Email Verification",
+      "description": "Email verification endpoints (public)"
+    },
+    {
+      "name": "Auth - Password Reset",
+      "description": "Password reset workflow endpoints (public)"
+    },
+    {
+      "name": "Profile",
+      "description": "User profile management endpoints (protected)"
+    },
+    {
+      "name": "Profile - Admin",
+      "description": "Admin-only profile endpoints (protected + role check)"
+    }
+  ]
+}
