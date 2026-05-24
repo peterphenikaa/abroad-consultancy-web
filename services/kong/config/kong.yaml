@@ -26,12 +26,92 @@ plugins:
     enabled: true
     config:
       allow:
-        - ["0.0.0.0/0"] # turn on for all IPs, adjust as needed for production
+        - "0.0.0.0/0" # turn on for all IPs, adjust as needed for production
 
+# 2. Services and Routes
 services:
-  - name: mock-service
-    url: http://localhost:8000
+  # Global Health Check Endpoint
+  # Sử dụng plugin request-termination để trả về 200 OK ngay tại Gateway
+  - name: gateway-health
+    url: http://localhost:8000 # Dummy URL, plugin sẽ chặn trước khi gọi
     routes:
-      - name: health-check
+      - name: health-route
         paths:
           - /health
+    plugins:
+      - name: request-termination
+        config:
+          status_code: 200
+          content_type: application/json; charset=utf-8
+          body: '{"status": "OK", "service": "Kong Gateway", "message": "Gateway is routing traffic successfully."}'
+
+  # Auth service
+  - name: auth-service
+    host: cambridge-auth-service
+    port: 3001
+    routes:
+      - name: auth-route
+        paths:
+          - /api/auth
+        strip_path: false
+
+  # AI rag service
+  - name: ai-rag-service
+    host: ai-rag-service
+    port: 3003
+    routes:
+      - name: ai-rag-routes
+        paths:
+          - /api/ai/chat
+          - /api/ai/sync-rag
+        strip_path: true
+
+  # Content Service
+  - name: content-service
+    host: content-service
+    port: 3000
+    routes:
+      - name: content-routes
+        paths:
+          - /api/content
+          - /api/v1
+        strip_path: false
+
+  # User Service
+  - name: user-service
+    host: user-service
+    port: 3002
+    routes:
+      - name: user-routes
+        paths:
+          - /api/users
+        strip_path: false
+
+  # Search Service
+  - name: search-service
+    host: search-service
+    port: 3007
+    routes:
+      - name: search-routes
+        paths:
+          - /api/search
+        strip_path: false
+
+  # Mock Stub Services
+  # Gom chung các dịch vụ chưa implement vào một rule để dễ quản lý
+  - name: stub-services
+    url: http://localhost:8000 # Dummy URL
+    routes:
+      - name: stub-routes
+        paths:
+          - /api/exams
+          - /api/quizzes
+          - /api/payments
+          - /api/notifications
+          - /api/analytics
+    plugins:
+      - name: request-termination
+        config:
+          status_code: 503
+          content_type: application/json; charset=utf-8
+          body: '{"success": false, "message": "Service not yet implemented. Please check back later."}'
