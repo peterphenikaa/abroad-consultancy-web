@@ -27,8 +27,8 @@ app.post("/api/sync-rag", async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     console.log(
       "🔄 Bắt đầu nạp " +
-        limit +
-        " bản ghi vào Pinecone (Vector Embeddings)...",
+      limit +
+      " bản ghi vào Pinecone (Vector Embeddings)...",
     );
 
     const { rows: universities } = await pgPool.query(
@@ -123,8 +123,8 @@ app.post("/api/sync-rag", async (req, res) => {
       }
       console.log(
         "🚀 Đã lưu thành công " +
-          vectors.length +
-          " trường học lên Pinecone Vector Database!",
+        vectors.length +
+        " trường học lên Pinecone Vector Database!",
       );
     }
 
@@ -220,6 +220,49 @@ app.post("/api/chat", async (req, res) => {
   } catch (err) {
     console.error("Lỗi chat:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/quiz/explain', async (req, res) => {
+  try {
+    const { questionText, options = [], selectedOptionId, correctOptionId, skillTag } = req.body;
+
+    const selectedOption = options.find(opt => opt.includes(selectedOptionId)) || "Đáp án học sinh chọn";
+    const correctOption = options.find(opt => opt.includes(correctOptionId)) || "Đáp án đúng";
+
+    const prompt = `
+Bạn là giáo viên tiếng Anh tận tâm. Học sinh vừa làm sai câu hỏi trắc nghiệm.
+Chủ đề: ${skillTag || 'Không xác định'}
+
+Câu hỏi: "${questionText}"
+Các đáp án:
+${options.join('\n')}
+
+Học sinh đã chọn: ${selectedOption}
+Đáp án đúng là: ${correctOption}
+
+Yêu cầu:
+Giải thích RẤT NGẮN GỌN (dưới 50 từ) tại sao lựa chọn của học sinh bị sai và tại sao đáp án kia mới đúng.
+Bạn PHẢI trả về ĐÚNG định dạng JSON sau (không kèm markdown \`\`\`json hay bất kỳ chữ nào khác):
+{
+  "explanation": "Câu giải thích của bạn...",
+  "citations": []
+}
+`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    const jsonMatch = text.match(/\\{[\\s\\S]*\\}/);
+    if (jsonMatch) {
+      return res.status(200).json(JSON.parse(jsonMatch[0]));
+    }
+    return res.status(200).json({ explanation: text, citations: [] });
+
+  } catch (error) {
+    console.error("Lỗi giải thích quiz:", error);
+    res.status(500).json({ error: "Lỗi nội bộ khi gọi LLM: " + error.message });
   }
 });
 

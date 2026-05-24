@@ -1,7 +1,20 @@
 import React from 'react';
 import { Badge } from './badge';
 
-const SkillTag = ({ skill, variant = "default", className, onClick, onRemove }) => {
+interface Skill {
+    id: number | string;
+    name: string;
+}
+
+interface SkillTagProps {
+    skill: Skill;
+    variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+    className?: string;
+    onClick?: () => void;
+    onRemove?: (skill: Skill) => void;
+}
+
+const SkillTag = ({ skill, variant = "default", className, onClick, onRemove }: SkillTagProps) => {
     return (
         <Badge
             variant={variant}

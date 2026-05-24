@@ -5,7 +5,12 @@ import { DownloadCloud, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
 
-export default function DownloadButton({ contentId, className }) {
+interface DownloadButtonProps {
+    contentId: string | number;
+    className?: string;
+}
+
+export default function DownloadButton({ contentId, className }: DownloadButtonProps) {
     const { downloadContent, loading, progress } = useDownloadContent();
     const [isDownloaded, setIsDownloaded] = useState(false);
 
@@ -13,7 +18,8 @@ export default function DownloadButton({ contentId, className }) {
         let isMounted = true;
         const checkDownloaded = async () => {
             try {
-                const offlineData = await getOfflineDataSafely(db.contents, contentId);
+                // @ts-ignore
+                const offlineData = await getOfflineDataSafely(db.contents, contentId.toString());
                 if (isMounted) setIsDownloaded(!!offlineData);
             } catch (error) {
                 console.error("Lỗi tra cứu offline DB:", error);

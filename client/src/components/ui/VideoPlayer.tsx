@@ -14,16 +14,23 @@ import {
 } from "lucide-react";
 import { Button } from "./button";
 
-function formatTime(seconds) {
+function formatTime(seconds: number) {
   if (isNaN(seconds)) return "0:00";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
-  const videoRef = useRef(null);
-  const progressRef = useRef(null);
+interface VideoPlayerProps {
+  videoUrl: string;
+  title?: string;
+  onEnded?: () => void;
+  onNext?: () => void;
+}
+
+export function VideoPlayer({ videoUrl, title, onEnded, onNext }: VideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -31,11 +38,11 @@ export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
   const [isBuffering, setIsBuffering] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isEnded, setIsEnded] = useState(false);
-  const hideTimeout = useRef(null);
+  const hideTimeout = useRef<NodeJS.Timeout | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showRateMenu, setShowRateMenu] = useState(false);
 
-  const getYouTubeEmbedUrl = (url) => {
+  const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
@@ -69,7 +76,7 @@ export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
 
   const handleMouseMove = () => {
     setShowControls(true);
-    clearTimeout(hideTimeout.current);
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
     if (isPlaying && !isEnded) {
       hideTimeout.current = setTimeout(() => setShowControls(false), 2500);
     }
@@ -111,7 +118,7 @@ export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
     if (video) setDuration(video.duration);
   };
 
-  const handleProgressClick = (e) => {
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const bar = progressRef.current;
     if (!bar || !videoRef.current) return;
     const rect = bar.getBoundingClientRect();
@@ -119,7 +126,7 @@ export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
     videoRef.current.currentTime = ratio * duration;
   };
 
-  const handleSkip = (seconds) => {
+  const handleSkip = (seconds: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.max(
         0,
@@ -136,10 +143,10 @@ export function VideoPlayer({ videoUrl, title, onEnded, onNext }) {
 
   const handlePIP = async () => {
     try {
-      if (videoRef.current !== document.pictureInPictureElement) {
-        await videoRef.current.requestPictureInPicture()
-      } else {
-        await document.exitPictureInPicture()
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (videoRef.current) {
+        await videoRef.current.requestPictureInPicture();
       }
     } catch (error) {
       console.error("Lỗi PIP: ", error);
