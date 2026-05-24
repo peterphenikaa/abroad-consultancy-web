@@ -3,6 +3,7 @@ services:
   kong:
     image: "${KONG_DOCKER_TAG:-kong:latest}"
     user: "${KONG_USER:-kong}"
+    container_name: cambridge-kong
     environment:
       # Kích hoạt chế độ DB-less
       KONG_DATABASE: "off"
