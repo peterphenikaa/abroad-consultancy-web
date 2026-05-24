@@ -23,7 +23,7 @@ app.use(cookieParser());
 app.use(httpLogger);
 
 // Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
+app.get('/api/auth/health', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'UP',
     timestamp: new Date().toISOString(),
@@ -31,7 +31,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 // Readiness endpoint
-app.get('/ready', async (_req: Request, res: Response) => {
+app.get('/api/auth/ready', async (_req: Request, res: Response) => {
   try {
     // 1. DB check
     await prismaClient.$queryRaw`SELECT 1`;
