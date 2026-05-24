@@ -67,7 +67,9 @@ services:
     image: nginx:alpine
     container_name: cambridge-kong-swagger
     volumes:
-      - ./swagger:/usr/share/nginx/html:ro
+      - ./swagger/index.html:/usr/share/nginx/html/index.html:ro
+      - ./swagger/swagger.json:/usr/share/nginx/html/swagger.json:ro
+      - ./swagger/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - app-network
 
