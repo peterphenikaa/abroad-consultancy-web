@@ -38,7 +38,74 @@ plugins:
       allow:
         - "0.0.0.0/0" # turn on for all IPs, adjust as needed for production
 
-# 2. Services and Routes
+  - name: request-size-limiting
+    enabled: true
+    config:
+      allowed_payload_size: 10
+
+  - name: prometheus
+    enabled: true
+
+  - name: file-log
+    enabled: true
+    config:
+      path: /dev/stdout
+      reopen: true
+
+consumers:
+  - username: cambridge-api
+    jwt_secrets:
+      - algorithm: RS256
+        key: cambridge-api
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnYecntpgo0tK09zyDmlc
+          XIqLU1GAFzhhe4/40AXkmHI78HhyG9IOHEE+T4vnMtZSusnlWoLoO43BrWx0yNeu
+          XLonfDaLMeX1mjNlUN+SDC+/zhiCyP7N5edYLZUK+BmkDHiweQ67NRTY/8PQm1cl
+          +udGs/AF36ZXRbcj5Ge/tNHRiFLfD9Ran0dDH+TJzZJUH5CMjMDjy/RPoxcWn1Bi
+          au5HAWHa8CmETDi4sGJJa78HVUckHoEsAdCrjXRwRAUsFkrErZjp22fJAdhfJXJb
+          5tHifjJ24j5Z4Ltf/G2K1cTqPveYW7bDFAVX5IrQIWI74zmy6agHT5I/q/Dk94u2
+          AwIDAQAB
+          -----END PUBLIC KEY-----
+
+upstreams:
+  - name: auth-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /api/auth/health
+        timeout: 1
+        healthy:
+          interval: 30
+          successes: 1
+        unhealthy:
+          interval: 30
+          http_failures: 3
+          tcp_failures: 3
+    targets:
+      - target: cambridge-auth-service:3001
+        weight: 100
+
+  - name: content-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: tcp
+        http_path: /
+        timeout: 1
+        healthy:
+          interval: 30
+          successes: 1
+        unhealthy:
+          interval: 30
+          http_failures: 3
+          tcp_failures: 3
+    targets:
+      - target: content-service:3000
+        weight: 100
+
+# 3. Services and Routes
 services:
   # Global Health Check Endpoint
   # Sử dụng plugin request-termination để trả về 200 OK ngay tại Gateway
@@ -57,8 +124,11 @@ services:
 
   # Auth service
   - name: auth-service
-    host: cambridge-auth-service
-    port: 3001
+    host: auth-service-upstream
+    port: 8000
+    connect_timeout: 5000
+    read_timeout: 60000
+    write_timeout: 60000
     routes:
       - name: auth-route
         paths:
@@ -75,8 +145,11 @@ services:
 
   # Content Service
   - name: content-service
-    host: content-service
-    port: 3000
+    host: content-service-upstream
+    port: 8000
+    connect_timeout: 5000
+    read_timeout: 60000
+    write_timeout: 60000
     routes:
       - name: content-routes
         paths:
@@ -93,6 +166,13 @@ services:
         paths:
           - /api/users
         strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          anonymous: null
+          claims_to_verify:
+            - exp
 
   # Search Service
   - name: search-service
@@ -103,6 +183,13 @@ services:
         paths:
           - /api/search
         strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          anonymous: null
+          claims_to_verify:
+            - exp
 
   # Swagger Docs
   - name: swagger-docs

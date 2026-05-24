@@ -10,6 +10,7 @@ export interface JwtPayLoad {
   permissions: PermissionType[];
   iat?: number;
   exp?: number;
+  iss?: string;
 }
 
 export interface JwtResetPayLoad {
