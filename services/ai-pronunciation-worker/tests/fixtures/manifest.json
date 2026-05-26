@@ -1,0 +1,58 @@
+[
+  {
+    "id": "01_greeting",
+    "file": "01_greeting.wav",
+    "reference_transcript": "Hello, my name is Linh and I am learning English pronunciation every day.",
+    "cefr_level": "A2",
+    "target_accent": "american"
+  },
+  {
+    "id": "02_daily_routine",
+    "file": "02_daily_routine.wav",
+    "reference_transcript": "I usually wake up at six thirty, have breakfast, and take the bus to school.",
+    "cefr_level": "B1",
+    "target_accent": "american"
+  },
+  {
+    "id": "03_hometown",
+    "file": "03_hometown.wav",
+    "reference_transcript": "My hometown is a small city near the coast where the weather is warm and people are very friendly.",
+    "cefr_level": "B1",
+    "target_accent": "american"
+  },
+  {
+    "id": "04_technology",
+    "file": "04_technology.wav",
+    "reference_transcript": "Technology has changed the way we communicate, work, and access information in our daily lives.",
+    "cefr_level": "B2",
+    "target_accent": "american"
+  },
+  {
+    "id": "05_environment",
+    "file": "05_environment.wav",
+    "reference_transcript": "Protecting the environment is important because climate change affects food, water, and health worldwide.",
+    "cefr_level": "B2",
+    "target_accent": "british"
+  },
+  {
+    "id": "06_education",
+    "file": "06_education.wav",
+    "reference_transcript": "Online education gives students flexible schedules, but it also requires strong motivation and time management skills.",
+    "cefr_level": "B2",
+    "target_accent": "american"
+  },
+  {
+    "id": "07_travel",
+    "file": "07_travel.wav",
+    "reference_transcript": "When I travel abroad, I enjoy trying local food, visiting museums, and practicing English with native speakers.",
+    "cefr_level": "B1",
+    "target_accent": "american"
+  },
+  {
+    "id": "08_opinion",
+    "file": "08_opinion.wav",
+    "reference_transcript": "In my opinion, learning a foreign language opens many career opportunities and helps you understand different cultures more deeply.",
+    "cefr_level": "C1",
+    "target_accent": "american"
+  }
+]
