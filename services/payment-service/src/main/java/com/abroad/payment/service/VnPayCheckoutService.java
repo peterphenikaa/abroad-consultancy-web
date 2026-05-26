@@ -1,5 +1,6 @@
 package com.abroad.payment.service;
 
+import com.abroad.payment.client.CourseEnrollmentClient;
 import com.abroad.payment.config.VnpayProperties;
 import com.abroad.payment.domain.Payment;
 import com.abroad.payment.domain.PaymentStatus;
@@ -32,14 +33,17 @@ public class VnPayCheckoutService {
     private final VnpayProperties vnpay;
     private final PaymentRepository paymentRepository;
     private final BillingSubscriptionService billingSubscriptionService;
+    private final CourseEnrollmentClient courseEnrollmentClient;
 
     public VnPayCheckoutService(
             VnpayProperties vnpay,
             PaymentRepository paymentRepository,
-            BillingSubscriptionService billingSubscriptionService) {
+            BillingSubscriptionService billingSubscriptionService,
+            CourseEnrollmentClient courseEnrollmentClient) {
         this.vnpay = vnpay;
         this.paymentRepository = paymentRepository;
         this.billingSubscriptionService = billingSubscriptionService;
+        this.courseEnrollmentClient = courseEnrollmentClient;
     }
 
     public boolean isReady() {
@@ -63,6 +67,14 @@ public class VnPayCheckoutService {
                 req.amountVnd().setScale(0, RoundingMode.HALF_UP);
         if (amountVnd.compareTo(BigDecimal.ONE) < 0) {
             throw new IllegalArgumentException("Số tiền không hợp lệ");
+        }
+        if (req.courseId() == null) {
+            if (req.planCode() == null || req.planCode().isBlank()) {
+                throw new IllegalArgumentException("planCode là bắt buộc cho thanh toán gói");
+            }
+            if (req.billingCycle() == null || req.billingCycle().isBlank()) {
+                throw new IllegalArgumentException("billingCycle là bắt buộc cho thanh toán gói");
+            }
         }
         long amountMinor = amountVnd.multiply(BigDecimal.valueOf(100)).longValueExact();
 
@@ -184,9 +196,39 @@ public class VnPayCheckoutService {
         p.setUpdatedAt(Instant.now());
         paymentRepository.save(p);
         if (becameCompleted) {
-            billingSubscriptionService.applySuccessfulSubscriptionPayment(p);
+            if (p.getCourseId() != null) {
+                courseEnrollmentClient.enrollAfterPayment(p.getUserId(), p.getCourseId());
+            } else {
+                billingSubscriptionService.applySuccessfulSubscriptionPayment(p);
+            }
         }
         return p.getStatus();
+    }
+
+    public String frontendRedirectForPayment(Map<String, String> params) {
+        String txnRef = params.get("vnp_TxnRef");
+        if (txnRef == null || txnRef.isBlank()) {
+            return vnpay.getFrontendRedirectBase();
+        }
+        try {
+            UUID paymentId = uuidFromTxnRef(txnRef);
+            return paymentRepository
+                    .findById(paymentId)
+                    .map(
+                            p -> {
+                                if (p.getCourseId() != null) {
+                                    String base = vnpay.getFrontendRedirectBase();
+                                    int idx = base.indexOf("/payment");
+                                    String origin =
+                                            idx >= 0 ? base.substring(0, idx) : base.replaceAll("/$", "");
+                                    return origin + "/courses/" + p.getCourseId() + "/payment";
+                                }
+                                return vnpay.getFrontendRedirectBase();
+                            })
+                    .orElse(vnpay.getFrontendRedirectBase());
+        } catch (IllegalArgumentException e) {
+            return vnpay.getFrontendRedirectBase();
+        }
     }
 
     private static UUID uuidFromTxnRef(String txnRef) {

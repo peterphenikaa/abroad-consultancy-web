@@ -27,7 +27,17 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { cn } from "../../components/ui/utils";
 
+import { CourseAccessGate } from "../../hooks/useCourseAccessGuard.jsx";
+
 export default function CourseDetailPage() {
+  return (
+    <CourseAccessGate>
+      <CourseDetailPageInner />
+    </CourseAccessGate>
+  );
+}
+
+function CourseDetailPageInner() {
   const { id: courseId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -29,6 +29,30 @@ function resolvePemFromEnv(varName) {
 
 const jwtPublicKeyPem = resolvePemFromEnv("JWT_PUBLIC_KEY");
 
+/** Tùy chọn: UUID test payment khi chưa có JWT. Để trống = bắt buộc Bearer token. */
+const paymentTestUserId = (process.env.PAYMENT_TEST_USER_ID || "").trim();
+
+function isPaymentRouteWithTestUser(pathKey) {
+  if (!pathKey.startsWith("/api/payments")) return false;
+  const excluded = new Set([
+    "/api/payments/webhook",
+    "/api/payments/health",
+    "/api/payments/vnpay/return",
+    "/api/payments/vnpay/ipn",
+  ]);
+  return !excluded.has(pathKey);
+}
+
+function isCourseAccessRoute(pathKey) {
+  return /^\/api\/v1\/courses\/[^/]+\/access$/.test(pathKey);
+}
+
+function attachPaymentTestUser(req) {
+  if (paymentTestUserId && !req.headers["x-user-id"]) {
+    req.headers["x-user-id"] = paymentTestUserId;
+  }
+}
+
 if (!process.env.JWT_SECRET && !jwtPublicKeyPem) {
   throw new Error("FATAL ERROR: Either JWT_SECRET or JWT_PUBLIC_KEY is required in .env file");
 }
@@ -100,9 +124,7 @@ const authenticateJWT = (req, res, next) => {
     "/swagger.json",
   ]);
 
-  if (publicRoutes.has(pathKey) || pathKey.startsWith("/api/v1/")) {
-    return next();
-  }
+  const isPublic = publicRoutes.has(pathKey) || pathKey.startsWith("/api/v1/");
 
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -110,22 +132,43 @@ const authenticateJWT = (req, res, next) => {
     const verifyOptions = jwtPublicKeyPem ? { algorithms: ["RS256"] } : {};
     const secret = jwtPublicKeyPem || process.env.JWT_SECRET;
 
-    jwt.verify(token, secret, verifyOptions, (err, user) => {
+    return jwt.verify(token, secret, verifyOptions, (err, user) => {
+      if (!err) {
+        req.headers["x-user-id"] = user.sub || user.id || user.userId;
+      }
+      if (isPublic) {
+        return next();
+      }
       if (err) {
+        if (paymentTestUserId && isPaymentRouteWithTestUser(pathKey)) {
+          req.headers["x-user-id"] = paymentTestUserId;
+          return next();
+        }
         return res.status(403).json({
           success: false,
           message: "Token không hợp lệ hoặc đã hết hạn",
         });
       }
-      req.headers["x-user-id"] = user.sub || user.id || user.userId;
       next();
     });
-  } else {
-    res.status(401).json({
-      success: false,
-      message: "Không tìm thấy mã Token xác thực (Unauthorized)",
-    });
   }
+
+  if (isPublic) {
+    if (paymentTestUserId && isCourseAccessRoute(pathKey)) {
+      attachPaymentTestUser(req);
+    }
+    return next();
+  }
+
+  if (paymentTestUserId && isPaymentRouteWithTestUser(pathKey)) {
+    req.headers["x-user-id"] = paymentTestUserId;
+    return next();
+  }
+
+  res.status(401).json({
+    success: false,
+    message: "Không tìm thấy mã Token xác thực (Unauthorized)",
+  });
 };
 
 app.use(authenticateJWT);

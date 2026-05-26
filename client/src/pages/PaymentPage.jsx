@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Shield, Check, Download, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { buildAuthHeaders } from "../lib/courseAccess";
 
 /** Internal USD list price × rate → VND for VNPay (replace with live FX if needed). */
 const USD_VND_RATE = 25000;
@@ -73,7 +74,6 @@ function formatPaymentAmount(payment) {
 }
 
 export default function PaymentPage() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subscription, setSubscription] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
@@ -97,19 +97,10 @@ export default function PaymentPage() {
   );
 
   const loadFromApi = useCallback(async () => {
-    const t = localStorage.getItem("access_token");
-    if (!t) {
-      setSubscription(null);
-      setTransactions([]);
-      setSubscriptionLoading(false);
-      setApiError(null);
-      return;
-    }
-
     setApiError(null);
     setSubscriptionLoading(true);
 
-    const headers = { Authorization: `Bearer ${t}` };
+    const headers = buildAuthHeaders();
 
     try {
       const [subRes, payRes] = await Promise.all([
@@ -206,19 +197,10 @@ export default function PaymentPage() {
   };
 
   const handlePlanClick = (planId) => {
-    if (!localStorage.getItem("access_token")) {
-      navigate(`/login?from=${encodeURIComponent("/payment")}`);
-      return;
-    }
     startVnpayCheckout(planId);
   };
 
   const startVnpayCheckout = async (planId) => {
-    const t = localStorage.getItem("access_token");
-    if (!t) {
-      navigate(`/login?from=${encodeURIComponent("/payment")}`);
-      return;
-    }
 
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
@@ -232,10 +214,7 @@ export default function PaymentPage() {
     try {
       const res = await fetch("/api/payments/vnpay/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${t}`,
-        },
+        headers: buildAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           amountVnd,
           orderInfo,
@@ -343,7 +322,7 @@ export default function PaymentPage() {
                   </h2>
                   <p className="text-white/80">
                     {!subscription
-                      ? "Sign in and connect to the payment service to see your plan."
+                      ? "Loading subscription from payment-service…"
                       : isExpired
                         ? "Pay for a new plan to reactivate."
                         : "Unlimited access to all professional features"}
@@ -531,7 +510,7 @@ export default function PaymentPage() {
                       {transactions.length === 0 ? (
                         <tr>
                           <td className="px-6 py-4 text-sm text-[var(--muted-foreground)]" colSpan={5}>
-                            {token ? "No transactions yet." : "Sign in to see history."}
+                            No transactions yet.
                           </td>
                         </tr>
                       ) : (

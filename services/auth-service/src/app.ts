@@ -6,6 +6,7 @@ import { prismaClient } from './lib/prisma';
 import { checkRedis } from './lib/redis';
 import cookieParser from 'cookie-parser';
 import authRouter from './modules/auth/auth.route';
+import { userRouter } from './modules/user/user.route';
 import http from 'http';
 import { AppError } from './types/shared.type';
 import swaggerUi from 'swagger-ui-express';
@@ -82,6 +83,7 @@ app.get('/swagger.json', (_req: Request, res: Response) => {
 
 // Auth route
 app.use('/api/auth', authRouter);
+app.use('/api/auth/users', userRouter);
 
 // Global Error handler
 app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {

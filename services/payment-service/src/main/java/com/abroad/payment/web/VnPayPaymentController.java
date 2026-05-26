@@ -57,7 +57,7 @@ public class VnPayPaymentController {
     @GetMapping("/vnpay/return")
     public RedirectView returnHandler(HttpServletRequest req) {
         Map<String, String> p = toParamMap(req);
-        String base = vnpayProperties.getFrontendRedirectBase();
+        String base = vnPayCheckoutService.frontendRedirectForPayment(p);
         if (!vnPayCheckoutService.validateSignature(p)) {
             return new RedirectView(base + "?vnpay=checksum");
         }

@@ -1,7 +1,9 @@
 package com.abroad.payment.web;
 
 import com.abroad.payment.service.BillingSubscriptionService;
+import com.abroad.payment.service.CourseAccessService;
 import com.abroad.payment.service.PaymentApplicationService;
+import com.abroad.payment.web.dto.CourseAccessResponse;
 import com.abroad.payment.web.dto.CreatePaymentRequest;
 import com.abroad.payment.web.dto.ErrorResponse;
 import com.abroad.payment.web.dto.PaymentResponse;
@@ -33,14 +35,17 @@ public class PaymentController {
 
     private final PaymentApplicationService paymentService;
     private final BillingSubscriptionService billingSubscriptionService;
+    private final CourseAccessService courseAccessService;
     private final byte[] webhookSecretBytes;
 
     public PaymentController(
             PaymentApplicationService paymentService,
             BillingSubscriptionService billingSubscriptionService,
+            CourseAccessService courseAccessService,
             @Value("${app.webhook.secret}") String webhookSecretValue) {
         this.paymentService = paymentService;
         this.billingSubscriptionService = billingSubscriptionService;
+        this.courseAccessService = courseAccessService;
         this.webhookSecretBytes = webhookSecretValue.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -75,6 +80,14 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(billingSubscriptionService.getOrCreateForUser(userId));
+    }
+
+    /** Kiểm tra quyền học khóa (đã thanh toán / miễn phí / đã ghi danh). */
+    @GetMapping("/courses/{courseId}/access")
+    public ResponseEntity<CourseAccessResponse> courseAccess(
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @PathVariable UUID courseId) {
+        return ResponseEntity.ok(courseAccessService.getAccess(userId, courseId));
     }
 
     @GetMapping("/{id}")

@@ -37,7 +37,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT Bearer token from login response. Include in header as `Authorization: Bearer <token>`
+      description: "JWT Bearer token from login response. Include in header as Authorization Bearer token."
 
   schemas:
     # ==================== USER SCHEMAS ====================

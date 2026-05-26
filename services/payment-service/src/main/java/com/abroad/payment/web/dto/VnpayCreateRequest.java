@@ -14,13 +14,11 @@ public record VnpayCreateRequest(
         @NotBlank @Size(max = 240) String orderInfo,
         UUID courseId,
         @Size(max = 20) String bankCode,
-        @NotBlank
-                @Pattern(
+        @Pattern(
                         regexp = "basic|pro|premium",
                         message = "planCode phải là basic, pro hoặc premium")
                 String planCode,
-        @NotBlank
-                @Pattern(
+        @Pattern(
                         regexp = "monthly|annual",
                         message = "billingCycle phải là monthly hoặc annual")
                 String billingCycle) {}

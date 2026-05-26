@@ -34,7 +34,7 @@ const CourseService = {
         const statusUpdate = currentCourse.status === 'PUBLISHED' ? 'DRAFT' : currentCourse.status;
         const safeData = pickAllowedFields(newData, ALLOWED_COURSE_UPDATE_FIELDS);
 
-        if (accessDurationDays !== undefined && accessDurationDays !== null) {
+        if (safeData.accessDurationDays !== undefined && safeData.accessDurationDays !== null) {
             safeData.accessDurationDays = parseInt(safeData.accessDurationDays, 10);
         }
         if (Object.keys(safeData).length === 0) {
@@ -107,13 +107,14 @@ const CourseService = {
         };
     },
 
-    getCourseById: async (courseId, userId = "11111111-1111-1111-1111-111111111111") => {
+    getCourseById: async (courseId, userId) => {
+        const progressUserId = userId || '00000000-0000-0000-0000-000000000000';
         const course = await prisma.course.findUnique({
             where: { courseId },
             include: {
-                enrollments: {
-                    where: { userId }
-                },
+                enrollments: userId
+                    ? { where: { userId } }
+                    : { take: 0 },
                 modules: {
                     include: {
                         lessons: {
@@ -122,7 +123,7 @@ const CourseService = {
                                     orderBy: { orderIndex: 'asc' },
                                     include: {
                                         progresses: {
-                                            where: { userId, isCompleted: true }
+                                            where: { userId: progressUserId, isCompleted: true }
                                         }
                                     }
                                 }
@@ -299,7 +300,73 @@ const CourseService = {
             ...m,
             targetDate: m.targetDate ? m.targetDate.toLocaleDateString('en-US') : null
         }));
-    }
+    },
+
+    enrollUser: async (userId, courseId) => {
+        const course = await prisma.course.findUnique({ where: { courseId } });
+        if (!course) throw createError('Course not found!', 404);
+
+        let expiresAt = null;
+        if (course.accessDurationDays) {
+            expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + course.accessDurationDays);
+        }
+
+        return prisma.enrollment.upsert({
+            where: { userId_courseId: { userId, courseId } },
+            create: { userId, courseId, status: 'ACTIVE', expiresAt },
+            update: { status: 'ACTIVE', expiresAt, updatedAt: new Date() },
+        });
+    },
+
+    getCourseAccessStatus: async (courseId, userId) => {
+        const course = await prisma.course.findUnique({
+            where: { courseId },
+            select: {
+                courseId: true,
+                title: true,
+                price: true,
+                isFree: true,
+                thumbnailUrl: true,
+                subject: true,
+                status: true,
+            },
+        });
+        if (!course) throw createError('Course not found!', 404);
+
+        const base = {
+            courseId: course.courseId,
+            title: course.title,
+            price: Number(course.price),
+            isFree: course.isFree,
+            thumbnailUrl: course.thumbnailUrl,
+            subject: course.subject,
+            hasAccess: false,
+            enrolled: false,
+            paid: false,
+            requiresLogin: !userId,
+        };
+
+        if (course.isFree) {
+            return { ...base, hasAccess: true, isFree: true };
+        }
+
+        if (!userId) {
+            return base;
+        }
+
+        const payment = await prisma.payment.findFirst({
+            where: { userId, courseId, status: 'COMPLETED' },
+            orderBy: { createdAt: 'desc' },
+        });
+        if (payment) {
+            await CourseService.enrollUser(userId, courseId);
+            return { ...base, hasAccess: true, paid: true, enrolled: true };
+        }
+
+        // Khóa trả phí: chỉ mở sau thanh toán COMPLETED (enrollment tay/seed không đủ)
+        return base;
+    },
 };
 
 module.exports = CourseService;

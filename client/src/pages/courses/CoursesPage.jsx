@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, TrendingUp, Award, Calendar } from "lucide-react";
+import { BookOpen, TrendingUp, Award, Calendar, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "../../components/ui/accordion";
 import { CourseCard } from "./components/CourseCard";
 import { MilestoneList } from "./components/MilestoneList";
 import { StudyStreak } from "./components/StudyStreak";
 import { ExamCard } from "./components/ExamCard";
 import { upcomingExams } from "./data";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Card, CardContent } from "../../components/ui/card";
+import { openCourseWithPaymentGate, formatMoneyVnd, coursePriceVnd } from "../../lib/courseAccess";
 
 const themeColors = "var(--chart-1)";
 
@@ -20,12 +21,22 @@ export default function CoursesPage() {
   const navigate = useNavigate();
 
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [openingCourseId, setOpeningCourseId] = useState(null);
 
   const { data: coursesData, isLoading: isLoadingCourses, error: errorCourses } = useQuery({
     queryKey: ["my-courses"],
     queryFn: async () => {
       const res = await axios.get("/api/v1/courses/my-courses");
       return res.data.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: catalogData, isLoading: isLoadingCatalog } = useQuery({
+    queryKey: ["course-catalog"],
+    queryFn: async () => {
+      const res = await axios.get("/api/v1/courses?limit=20");
+      return res.data.data || [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -55,10 +66,17 @@ export default function CoursesPage() {
     setSelectedCourse((prev) => (prev === courseId ? null : courseId));
   };
 
-  const handleOpenCourse = (course) => {
+  const handleOpenCourse = async (course) => {
     const courseId = course.id || course.courseId;
-    navigate(`/courses/${courseId}`, { state: { course } });
+    setOpeningCourseId(courseId);
+    try {
+      await openCourseWithPaymentGate(courseId, navigate);
+    } finally {
+      setOpeningCourseId(null);
+    }
   };
+
+  const catalogCourses = (catalogData || []).filter((c) => c.status === "PUBLISHED");
 
   const displayStats = statsData || {
     coursesEnrolled: 0,
@@ -114,6 +132,58 @@ export default function CoursesPage() {
         <div className="grid lg:grid-cols-3 gap-8">
 
           <div className="lg:col-span-2 space-y-8">
+            <section>
+              <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-6 flex items-center gap-2">
+                <ShoppingBag className="w-6 h-6 text-[var(--accent-amber)]" />
+                Khám phá khóa học
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-4 mb-10">
+                {isLoadingCatalog ? (
+                  <p className="text-neutral-500 col-span-2">Đang tải khóa học…</p>
+                ) : catalogCourses.length === 0 ? (
+                  <p className="text-neutral-500 col-span-2">Chưa có khóa học nào.</p>
+                ) : (
+                  catalogCourses.map((course) => {
+                    const courseId = course.courseId || course.id;
+                    const priceVnd = course.isFree ? 0 : coursePriceVnd(course.price);
+                    return (
+                      <Card
+                        key={courseId}
+                        className="border-neutral-200 rounded-2xl hover:shadow-md transition-shadow"
+                      >
+                        <CardContent className="p-5 space-y-4">
+                          <div className="space-y-2">
+                            <Badge variant="secondary" className="font-normal border-0 text-xs">
+                              {course.subject || "Khóa học"}
+                            </Badge>
+                            <h3 className="text-lg font-bold font-[var(--font-serif)] text-neutral-900">
+                              {course.title}
+                            </h3>
+                            <p className="text-sm text-neutral-500 line-clamp-2">
+                              {course.description || "Nội dung chất lượng, lộ trình rõ ràng."}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-semibold text-[var(--primary)]">
+                              {course.isFree ? "Miễn phí" : formatMoneyVnd(priceVnd)}
+                            </span>
+                            <Button
+                              variant="gradient"
+                              size="sm"
+                              disabled={openingCourseId === courseId}
+                              onClick={() => handleOpenCourse({ ...course, id: courseId, courseId })}
+                            >
+                              {openingCourseId === courseId ? "Đang kiểm tra…" : "Học ngay"}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
             <section>
               <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-6 flex items-center gap-2">
                 <BookOpen className="w-6 h-6 text-[var(--accent-amber)]" />

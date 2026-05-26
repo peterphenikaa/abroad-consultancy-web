@@ -21,3 +21,5 @@ userRouter.get(
   checkPermission({ roles: [Role.SUPER_ADMIN] }),
   UserController.getUserById,
 );
+
+export { userRouter };

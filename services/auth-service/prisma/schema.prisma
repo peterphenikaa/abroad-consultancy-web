@@ -82,6 +82,7 @@ model UserProfile {
 
   bio              String? @db.Text
   avatarUrl        String? @map("avatar_url") @db.VarChar(500)
+  phone            String? @db.VarChar(20)
   educationalLevel String? @map("educational_level") @db.VarChar(100)
   learningGoals    String? @map("learning_goals") @db.Text
 
