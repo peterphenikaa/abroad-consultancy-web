@@ -23,8 +23,9 @@ public final class VnPayCrypto {
         return sb.toString();
     }
 
+    /** VNPay: space → '+', không dùng %20 (khớp sample chính thức URLEncoder). */
     public static String encodeVnpValue(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     /** Build hashData và query string (chưa gồm vnp_SecureHash). */
@@ -32,19 +33,29 @@ public final class VnPayCrypto {
         TreeMap<String, String> sorted = new TreeMap<>(params);
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-        int n = 0;
+        int nHash = 0;
+        int nQuery = 0;
         for (Map.Entry<String, String> e : sorted.entrySet()) {
             String key = e.getKey();
             String val = e.getValue();
             if (val == null || val.isEmpty()) {
                 continue;
             }
-            if (n++ > 0) {
-                hashData.append('&');
+            String encodedVal = encodeVnpValue(val);
+
+            // VNPay guidance: sign all params except vnp_SecureHash and vnp_SecureHashType.
+            // Query string still contains vnp_SecureHashType so gateway knows the algorithm.
+            if (!"vnp_SecureHashType".equals(key) && !"vnp_SecureHash".equals(key)) {
+                if (nHash++ > 0) {
+                    hashData.append('&');
+                }
+                hashData.append(key).append('=').append(encodedVal);
+            }
+
+            if (nQuery++ > 0) {
                 query.append('&');
             }
-            hashData.append(key).append('=').append(encodeVnpValue(val));
-            query.append(encodeVnpValue(key)).append('=').append(encodeVnpValue(val));
+            query.append(key).append('=').append(encodedVal);
         }
         return new BuildResult(hashData.toString(), query.toString());
     }

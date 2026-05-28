@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Shield, Check, Download, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Shield, Check, Download, CheckCircle2, AlertTriangle, CreditCard } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -83,13 +84,16 @@ export default function PaymentPage() {
   const [apiError, setApiError] = useState(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
-  const subscribedPlanId = subscription?.planCode || "basic";
+  const subscribedPlanId = subscription?.planCode?.toLowerCase?.() || null;
   const subscribedBillingCycle = subscription?.billingCycle === "annual" ? "annual" : "monthly";
   const expiresMs = subscription?.expiresAt != null ? new Date(subscription.expiresAt).getTime() : 0;
-  const isExpired = subscription && expiresMs < now;
+  const isExpired = subscription ? subscription.active === false || expiresMs < now : false;
+  const hasActiveSubscription = subscription && !isExpired;
 
   const subscribedPlan = useMemo(
     () => plans.find((p) => p.id === subscribedPlanId),
@@ -117,6 +121,17 @@ export default function PaymentPage() {
         return;
       }
 
+      if (subRes.status === 404) {
+        setSubscription(null);
+        if (payRes.ok) {
+          const list = await payRes.json();
+          setTransactions(Array.isArray(list) ? list : []);
+        } else {
+          setTransactions([]);
+        }
+        return;
+      }
+
       if (!subRes.ok) {
         const errText = await subRes.text();
         throw new Error(errText || `subscription/me ${subRes.status}`);
@@ -125,10 +140,20 @@ export default function PaymentPage() {
       const subJson = await subRes.json();
       setSubscription({
         userId: subJson.userId,
-        planCode: subJson.planCode,
+        planCode: (subJson.planCode || "").toLowerCase(),
         billingCycle: subJson.billingCycle,
         expiresAt: subJson.expiresAt,
+        active: subJson.active !== false,
+        cancelAtPeriodEnd: subJson.cancelAtPeriodEnd === true,
+        autoRenewEnabled: subJson.autoRenewEnabled !== false,
+        renewalFailureReason: subJson.renewalFailureReason || null,
+        savedPaymentMethod: subJson.savedPaymentMethod || null,
       });
+
+      if (subJson.active !== false && subJson.expiresAt) {
+        const cycle = subJson.billingCycle === "annual" ? "annual" : "monthly";
+        setBillingCycle(cycle);
+      }
 
       if (payRes.ok) {
         const list = await payRes.json();
@@ -181,23 +206,81 @@ export default function PaymentPage() {
   }, [searchParams, setSearchParams, loadFromApi]);
 
   const planButtonLabel = (planId) => {
+    if (checkoutPlanId === planId) return "Redirecting to VNPay…";
+    if (subscriptionLoading) return "…";
+
+    if (hasActiveSubscription) {
+      const planTier = PLAN_ORDER[planId];
+      const currentTier = PLAN_ORDER[subscribedPlanId];
+
+      if (planId === subscribedPlanId && billingCycle === subscribedBillingCycle) {
+        return "Current plan";
+      }
+      if (planId === subscribedPlanId && billingCycle !== subscribedBillingCycle) {
+        return billingCycle === "annual" ? "Switch to annual" : "Switch to monthly";
+      }
+      if (planTier > currentTier) return "Upgrade";
+      return "Not available";
+    }
+
     if (!token) return "Select plan";
-    if (!subscription) return "…";
-    if (isExpired) return "Select plan";
-    if (planId === subscribedPlanId) return "Current plan";
-    if (PLAN_ORDER[planId] > PLAN_ORDER[subscribedPlanId]) return "Upgrade";
     return "Select plan";
   };
 
   const isPlanButtonDisabled = (planId) => {
     if (checkoutPlanId) return true;
-    if (!token) return false;
-    if (subscriptionLoading || !subscription) return true;
-    return !isExpired && planId === subscribedPlanId;
+    if (subscriptionLoading) return true;
+    if (!hasActiveSubscription) return false;
+    if (planId === subscribedPlanId && billingCycle === subscribedBillingCycle) return true;
+    if (PLAN_ORDER[planId] < PLAN_ORDER[subscribedPlanId]) return true;
+    return false;
   };
 
+  const isCurrentPlanCard = (planId) =>
+    hasActiveSubscription &&
+    planId === subscribedPlanId &&
+    billingCycle === subscribedBillingCycle;
+
   const handlePlanClick = (planId) => {
+    if (isCurrentPlanCard(planId)) return;
     startVnpayCheckout(planId);
+  };
+
+  const formatPlanExpiry = (iso) =>
+    new Date(iso).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" });
+
+  const confirmCancelSubscription = async () => {
+    setCancelLoading(true);
+    setVnpayMessage(null);
+    try {
+      const res = await fetch("/api/payments/subscription/cancel", {
+        method: "POST",
+        headers: buildAuthHeaders(),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.error || `HTTP ${res.status}`);
+      }
+      setSubscription({
+        userId: data.userId,
+        planCode: (data.planCode || "").toLowerCase(),
+        billingCycle: data.billingCycle,
+        expiresAt: data.expiresAt,
+        active: data.active !== false,
+        cancelAtPeriodEnd: data.cancelAtPeriodEnd === true,
+        autoRenewEnabled: data.autoRenewEnabled === true,
+        renewalFailureReason: data.renewalFailureReason || null,
+        savedPaymentMethod: data.savedPaymentMethod || subscription?.savedPaymentMethod || null,
+      });
+      setShowCancelDialog(false);
+      setVnpayMessage(
+        "Renewal cancelled. You keep full access until your billing period ends.",
+      );
+    } catch (e) {
+      setVnpayMessage(e.message || "Could not cancel subscription.");
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   const startVnpayCheckout = async (planId) => {
@@ -245,10 +328,13 @@ export default function PaymentPage() {
   };
 
   const displayPriceHeroVnd =
-    subscription && subscribedPlan ? planAmountVnd(subscribedPlan, subscribedBillingCycle) : 0;
+    hasActiveSubscription && subscribedPlan
+      ? planAmountVnd(subscribedPlan, subscribedBillingCycle)
+      : 0;
   const heroLabel = subscribedBillingCycle === "annual" ? "per year" : "per month";
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-b from-[var(--background)] to-[var(--secondary)] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -280,9 +366,20 @@ export default function PaymentPage() {
             <div>
               <p className="font-medium text-amber-900 dark:text-amber-100">Subscription expired</p>
               <p className="text-sm text-amber-800/90 dark:text-amber-200/90">
-                Your {subscribedBillingCycle === "annual" ? "annual" : "monthly"} period has ended. Select a plan and
-                pay again via VNPay.
+                {subscription.renewalFailureReason
+                  ? `Auto-renewal failed: ${subscription.renewalFailureReason} Select a plan and pay again via VNPay.`
+                  : `Your ${subscribedBillingCycle === "annual" ? "annual" : "monthly"} period has ended. Select a plan and pay again via VNPay.`}
               </p>
+            </div>
+          </div>
+        )}
+
+        {hasActiveSubscription && subscription?.renewalFailureReason && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 flex gap-3 items-start">
+            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-red-900">Last renewal attempt failed</p>
+              <p className="text-sm text-red-800/90">{subscription.renewalFailureReason}</p>
             </div>
           </div>
         )}
@@ -303,8 +400,10 @@ export default function PaymentPage() {
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <Badge className="rounded-full bg-white/20 backdrop-blur-sm border-transparent mb-3">
-                    {!subscription ? (
+                    {subscriptionLoading ? (
                       <>…</>
+                    ) : !subscription ? (
+                      <>No plan yet</>
                     ) : isExpired ? (
                       <>
                         <AlertTriangle className="w-3 h-3" />
@@ -318,17 +417,23 @@ export default function PaymentPage() {
                     )}
                   </Badge>
                   <h2 className="text-3xl font-[var(--font-serif)] mb-2">
-                    {!subscription ? "—" : isExpired ? "No active plan" : subscribedPlan?.name}
+                    {subscriptionLoading
+                      ? "—"
+                      : !subscription || isExpired
+                        ? "No active plan"
+                        : subscribedPlan?.name}
                   </h2>
                   <p className="text-white/80">
-                    {!subscription
-                      ? "Loading subscription from payment-service…"
-                      : isExpired
-                        ? "Pay for a new plan to reactivate."
-                        : "Unlimited access to all professional features"}
+                    {subscriptionLoading
+                      ? "Loading subscription…"
+                      : !subscription
+                        ? "Choose a plan below and pay via VNPay to activate."
+                        : isExpired
+                          ? "Pay for a new plan to reactivate."
+                          : "Unlimited access to all professional features"}
                   </p>
                 </div>
-                {subscription && !isExpired && subscribedPlan && (
+                {hasActiveSubscription && subscribedPlan && (
                   <div className="text-right">
                     <div className="text-3xl sm:text-4xl font-bold leading-tight">
                       {formatMoneyVnd(displayPriceHeroVnd)}
@@ -338,11 +443,17 @@ export default function PaymentPage() {
                 )}
               </div>
 
-              {subscription && (
+              {subscription && !subscriptionLoading && (
                 <div className="grid sm:grid-cols-2 gap-4 pt-6 border-t border-white/20">
                   <div>
                     <div className="text-sm text-white/70 mb-1">
-                      {isExpired ? "Expired on" : "Renews / ends on"}
+                      {subscription.cancelAtPeriodEnd && !isExpired
+                        ? "Access until"
+                        : isExpired
+                          ? "Expired on"
+                          : subscription.autoRenewEnabled
+                            ? "Next auto-renewal"
+                            : "Renews / ends on"}
                     </div>
                     <div className="font-medium">
                       {new Date(subscription.expiresAt).toLocaleString("en-US", {
@@ -354,43 +465,41 @@ export default function PaymentPage() {
                   {!isExpired && (
                     <div>
                       <div className="text-sm text-white/70 mb-1">Billing cycle</div>
-                      <div className="font-medium">
-                        {subscribedBillingCycle === "annual" ? "Annual" : "Monthly"}
-                      </div>
+                      <div className="font-medium capitalize">{subscribedBillingCycle}</div>
                     </div>
                   )}
                 </div>
               )}
 
+              {hasActiveSubscription && subscription?.autoRenewEnabled && !subscription?.cancelAtPeriodEnd && (
+                <p className="text-sm text-white/85 mt-4 rounded-xl bg-white/10 px-4 py-3">
+                  Your saved card will be charged automatically on{" "}
+                  <strong>{formatPlanExpiry(subscription.expiresAt)}</strong> unless you cancel.
+                </p>
+              )}
+
+              {hasActiveSubscription && subscription?.cancelAtPeriodEnd && (
+                <p className="text-sm text-white/85 mt-4 rounded-xl bg-white/10 px-4 py-3">
+                  Renewal cancelled. You can keep using your plan until{" "}
+                  <strong>{formatPlanExpiry(subscription.expiresAt)}</strong>.
+                </p>
+              )}
+
               {isExpired && subscription && (
                 <p className="text-sm text-white/80 mt-4">
-                  Monthly and annual use different prices: choose below, then pay — the VNPay amount and renewal period
-                  (30 / 365 days) match your selection.
+                  Your subscription has ended. Select any plan below — billing period starts from
+                  payment date (1 calendar month or 1 year).
                 </p>
               )}
 
               <div className="flex gap-3 mt-6 flex-wrap">
                 <Button
-                  className="bg-white text-[var(--primary)] hover:bg-white/90"
-                  disabled={!subscription || isExpired}
-                  type="button"
-                >
-                  Manage Plan
-                </Button>
-                <Button
                   className="bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20"
-                  disabled={!subscription || isExpired}
+                  disabled={!hasActiveSubscription || subscription?.cancelAtPeriodEnd}
                   type="button"
+                  onClick={() => setShowCancelDialog(true)}
                 >
-                  Cancel Subscription
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-white/40 text-white bg-transparent hover:bg-white/10"
-                  type="button"
-                  onClick={() => setNow(Date.now())}
-                >
-                  Refresh status
+                  {subscription?.cancelAtPeriodEnd ? "Cancellation scheduled" : "Cancel Subscription"}
                 </Button>
               </div>
             </motion.div>
@@ -438,12 +547,19 @@ export default function PaymentPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                       className={`relative bg-white rounded-2xl p-6 border-2 transition-all ${
-                        plan.popular
-                          ? "border-[var(--accent-amber)] shadow-[var(--shadow-xl)]"
-                          : "border-[var(--border)] hover:border-[var(--accent-amber)]/50"
+                        isCurrentPlanCard(plan.id)
+                          ? "border-[var(--primary)] shadow-[var(--shadow-xl)] ring-2 ring-[var(--primary)]/20"
+                          : plan.popular
+                            ? "border-[var(--accent-amber)] shadow-[var(--shadow-xl)]"
+                            : "border-[var(--border)] hover:border-[var(--accent-amber)]/50"
                       }`}
                     >
-                      {plan.popular && (
+                      {isCurrentPlanCard(plan.id) && (
+                        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white border-transparent rounded-full">
+                          Current plan
+                        </Badge>
+                      )}
+                      {plan.popular && !isCurrentPlanCard(plan.id) && (
                         <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[var(--accent-amber)] to-[var(--accent-coral)] text-white border-transparent rounded-full">
                           Most Popular
                         </Badge>
@@ -468,14 +584,22 @@ export default function PaymentPage() {
                         ))}
                       </ul>
 
-                      <Button
-                        variant={plan.popular ? "gradient" : "secondary"}
-                        className="w-full"
-                        disabled={isPlanButtonDisabled(plan.id)}
-                        onClick={() => handlePlanClick(plan.id)}
-                      >
-                        {checkoutPlanId === plan.id ? "Redirecting to VNPay…" : planButtonLabel(plan.id)}
-                      </Button>
+                      {isCurrentPlanCard(plan.id) ? (
+                        <p className="w-full text-center text-sm font-medium text-[var(--primary)] py-2.5">
+                          Current plan
+                        </p>
+                      ) : (
+                        <Button
+                          variant={plan.popular ? "gradient" : "secondary"}
+                          className="w-full"
+                          disabled={isPlanButtonDisabled(plan.id)}
+                          onClick={() => handlePlanClick(plan.id)}
+                        >
+                          {checkoutPlanId === plan.id
+                            ? "Redirecting to VNPay…"
+                            : planButtonLabel(plan.id)}
+                        </Button>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -567,6 +691,37 @@ export default function PaymentPage() {
           </div>
 
           <div className="space-y-6">
+            {subscription?.savedPaymentMethod && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-white rounded-2xl p-6 shadow-[var(--shadow-md)] border border-[var(--border)]"
+              >
+                <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-[var(--primary)]" />
+                  Saved payment method
+                </h3>
+                <div className="rounded-xl bg-[var(--secondary)] p-4 text-sm space-y-2">
+                  <div className="font-mono text-[var(--foreground)]">
+                    {subscription.savedPaymentMethod.maskedDisplay ||
+                      `**** **** **** ${subscription.savedPaymentMethod.last4 || "****"}`}
+                  </div>
+                  <div className="text-[var(--muted-foreground)]">
+                    {subscription.savedPaymentMethod.brand || subscription.savedPaymentMethod.bankCode || "Card"}
+                    {subscription.savedPaymentMethod.bankCode
+                      ? ` · ${subscription.savedPaymentMethod.bankCode}`
+                      : ""}
+                  </div>
+                  <p className="text-xs text-[var(--muted-foreground)] pt-1">
+                    {subscription.autoRenewEnabled && !subscription.cancelAtPeriodEnd
+                      ? "Used for automatic renewal at the end of each billing period."
+                      : "On file from your last subscription payment. Not charged while renewal is cancelled."}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -615,5 +770,77 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+
+      {showCancelDialog &&
+        hasActiveSubscription &&
+        subscribedPlan &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-subscription-title"
+            onClick={() => !cancelLoading && setShowCancelDialog(false)}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-[var(--border)] mx-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3
+                id="cancel-subscription-title"
+                className="text-xl font-semibold text-[var(--foreground)] mb-2 text-center"
+              >
+                Cancel subscription?
+              </h3>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4 text-center">
+                Your current plan details:
+              </p>
+              <div className="rounded-xl bg-[var(--secondary)] p-4 mb-4 text-sm space-y-2">
+                <div className="flex justify-between gap-4">
+                  <span className="text-[var(--muted-foreground)]">Plan</span>
+                  <span className="font-medium text-[var(--foreground)]">{subscribedPlan.name}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[var(--muted-foreground)]">Billing cycle</span>
+                  <span className="font-medium text-[var(--foreground)] capitalize">
+                    {subscribedBillingCycle === "annual" ? "Annual" : "Monthly"}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[var(--muted-foreground)]">Ends on</span>
+                  <span className="font-medium text-[var(--foreground)] text-right">
+                    {formatPlanExpiry(subscription.expiresAt)}
+                  </span>
+                </div>
+              </div>
+              <p className="text-sm text-[var(--foreground)] mb-6 text-center">
+                Are you sure you want to cancel? You will{" "}
+                <strong>keep access until the end date above</strong>. Auto-renewal and charges to your saved card will
+                stop after that date.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={cancelLoading}
+                  onClick={() => setShowCancelDialog(false)}
+                >
+                  Keep plan
+                </Button>
+                <Button
+                  type="button"
+                  disabled={cancelLoading}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={confirmCancelSubscription}
+                >
+                  {cancelLoading ? "Processing…" : "Confirm cancellation"}
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

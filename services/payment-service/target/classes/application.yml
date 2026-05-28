@@ -4,12 +4,24 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
+logging:
+  level:
+    com.abroad.payment.service.VnPayCheckoutService: ${VNPAY_DEBUG_LOG:INFO}
+
 server:
   port: ${SERVER_PORT:3008}
 
 app:
   webhook:
     secret: ${PAYMENT_WEBHOOK_SECRET:dev-webhook-secret}
+  payment:
+    pending-ttl-minutes: ${PAYMENT_PENDING_TTL_MINUTES:15}
+    pending-cleanup-enabled: ${PAYMENT_PENDING_CLEANUP_ENABLED:true}
+    pending-cleanup-cron: ${PAYMENT_PENDING_CLEANUP_CRON:0 * * * * *}
+  billing:
+    auto-renew-enabled: ${BILLING_AUTO_RENEW_ENABLED:true}
+    simulate-insufficient-funds: ${BILLING_SIMULATE_INSUFFICIENT_FUNDS:false}
+    renewal-cron: ${BILLING_RENEWAL_CRON:0 0 * * * *}
   content-service:
     url: ${CONTENT_SERVICE_URL:http://content-service:3000}
   vnpay:

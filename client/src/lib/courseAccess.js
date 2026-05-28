@@ -7,7 +7,7 @@ export function coursePriceVnd(priceUsd) {
 }
 
 export function formatMoneyVnd(amount) {
-  return new Intl.NumberFormat("vi-VN").format(amount) + " ₫";
+  return new Intl.NumberFormat("en-US").format(amount) + " VND";
 }
 
 export function getAccessToken() {

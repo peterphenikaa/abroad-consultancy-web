@@ -26,11 +26,13 @@ export default function AppRoutes() {
     location.pathname !== "/courses" &&
     !location.pathname.endsWith("/payment");
 
-  const isCheckoutPage = location.pathname.endsWith("/payment");
+  const isCourseCheckoutPage =
+    location.pathname.startsWith("/courses/") &&
+    location.pathname.endsWith("/payment");
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      {!isCourseDetailPage && !isCheckoutPage && <Navigation />}
+      {!isCourseDetailPage && !isCourseCheckoutPage && <Navigation />}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={location.pathname}

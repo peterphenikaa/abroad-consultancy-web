@@ -20,7 +20,7 @@ public class VnpayProperties {
     }
 
     public void setTmnCode(String tmnCode) {
-        this.tmnCode = tmnCode;
+        this.tmnCode = tmnCode == null ? null : tmnCode.trim();
     }
 
     public String getHashSecret() {
@@ -28,7 +28,7 @@ public class VnpayProperties {
     }
 
     public void setHashSecret(String hashSecret) {
-        this.hashSecret = hashSecret;
+        this.hashSecret = hashSecret == null ? null : hashSecret.trim();
     }
 
     public String getPayUrl() {
@@ -36,7 +36,7 @@ public class VnpayProperties {
     }
 
     public void setPayUrl(String payUrl) {
-        this.payUrl = payUrl;
+        this.payUrl = payUrl == null ? null : payUrl.trim();
     }
 
     public String getReturnUrl() {
@@ -44,7 +44,7 @@ public class VnpayProperties {
     }
 
     public void setReturnUrl(String returnUrl) {
-        this.returnUrl = returnUrl;
+        this.returnUrl = returnUrl == null ? null : returnUrl.trim();
     }
 
     public String getIpnUrl() {
@@ -52,7 +52,7 @@ public class VnpayProperties {
     }
 
     public void setIpnUrl(String ipnUrl) {
-        this.ipnUrl = ipnUrl;
+        this.ipnUrl = ipnUrl == null ? null : ipnUrl.trim();
     }
 
     public String getFrontendRedirectBase() {
@@ -60,7 +60,7 @@ public class VnpayProperties {
     }
 
     public void setFrontendRedirectBase(String frontendRedirectBase) {
-        this.frontendRedirectBase = frontendRedirectBase;
+        this.frontendRedirectBase = frontendRedirectBase == null ? null : frontendRedirectBase.trim();
     }
 
     public boolean isConfigured() {

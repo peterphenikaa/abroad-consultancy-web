@@ -13,7 +13,7 @@ import {
 const CONTACT_STORAGE_KEY = "course_checkout_contact";
 
 function formatCheckoutVnd(amount) {
-  return `${new Intl.NumberFormat("vi-VN").format(amount)} VND`;
+  return `${new Intl.NumberFormat("en-US").format(amount)} VND`;
 }
 
 function loadSavedContact() {
@@ -76,7 +76,7 @@ export default function CoursePaymentPage() {
         navigate(`/courses/${courseId}`, { replace: true });
       }
     } catch (e) {
-      setError(e.message || "Không thể tải thông tin khóa học.");
+      setError(e.message || "Could not load course information.");
     } finally {
       setLoading(false);
     }
@@ -108,20 +108,20 @@ export default function CoursePaymentPage() {
       const code = searchParams.get("code");
       const status = searchParams.get("status");
       if (code === "00" && status === "COMPLETED") {
-        setMessage("Thanh toán thành công! Đang mở khóa học…");
+        setMessage("Payment successful! Unlocking your course…");
         loadAccess().then(() => {
-          setMessage("Thanh toán thành công. Bạn có thể bắt đầu học ngay.");
+          setMessage("Payment successful. You can start learning now.");
           setTimeout(() => navigate(`/courses/${courseId}`, { replace: true }), 1500);
         });
       } else {
-        setMessage("Thanh toán chưa hoàn tất hoặc đã bị từ chối.");
+        setMessage("Payment was not completed or was declined.");
       }
     } else if (vnpay === "checksum") {
-      setMessage("Phản hồi VNPay không hợp lệ (checksum).");
+      setMessage("Invalid VNPay response (checksum).");
     } else if (vnpay === "error") {
       const reason = searchParams.get("reason");
       setMessage(
-        reason ? `Lỗi thanh toán: ${decodeURIComponent(reason)}` : "Có lỗi khi xử lý thanh toán.",
+        reason ? `Payment error: ${decodeURIComponent(reason)}` : "Something went wrong processing payment.",
       );
     }
 
@@ -130,8 +130,8 @@ export default function CoursePaymentPage() {
 
   const validateForm = () => {
     const next = {};
-    if (!isValidEmail(email)) next.email = "Vui lòng nhập email hợp lệ.";
-    if (!isValidPhone(phone)) next.phone = "Vui lòng nhập số điện thoại hợp lệ.";
+    if (!isValidEmail(email)) next.email = "Please enter a valid email address.";
+    if (!isValidPhone(phone)) next.phone = "Please enter a valid phone number.";
     setFieldErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -147,11 +147,11 @@ export default function CoursePaymentPage() {
     setCouponMessage(null);
     const code = couponCode.trim().toUpperCase();
     if (!code) {
-      setCouponMessage("Vui lòng nhập mã coupon.");
+      setCouponMessage("Please enter a coupon code.");
       return;
     }
     setAppliedDiscount(0);
-    setCouponMessage("Mã khuyến mãi chưa được hỗ trợ trong phiên bản test.");
+    setCouponMessage("Coupon codes are not supported in this test version.");
   };
 
   const startCheckout = async () => {
@@ -166,7 +166,7 @@ export default function CoursePaymentPage() {
     setMessage(null);
     setError(null);
 
-    const orderInfo = `Mua khoa hoc ${accessInfo.title || courseId}`.slice(0, 240);
+    const orderInfo = `Course purchase ${accessInfo.title || courseId}`.slice(0, 240);
 
     try {
       const res = await fetch("/api/payments/vnpay/create", {
@@ -187,22 +187,22 @@ export default function CoursePaymentPage() {
         const msg = data.message || data.error || `HTTP ${res.status}`;
         if (res.status === 401) {
           throw new Error(
-            "Chưa xác thực. Set PAYMENT_TEST_USER_ID trong .env (UUID mới) rồi restart api-gateway, hoặc gửi Bearer token.",
+            "Not authenticated. Set PAYMENT_TEST_USER_ID in .env and restart api-gateway, or send a Bearer token.",
           );
         }
-        throw new Error(typeof msg === "string" ? msg : "Không tạo được link thanh toán");
+        throw new Error(typeof msg === "string" ? msg : "Could not create payment link");
       }
       if (!data.paymentUrl) {
-        throw new Error("Thiếu paymentUrl trong phản hồi");
+        throw new Error("Missing paymentUrl in response");
       }
       window.location.href = data.paymentUrl;
     } catch (e) {
-      setError(e.message || "Không thể bắt đầu thanh toán VNPay.");
+      setError(e.message || "Could not start VNPay checkout.");
       setCheckoutLoading(false);
     }
   };
 
-  const courseTitle = loading ? "Đang tải…" : accessInfo?.title || "Khóa học";
+  const courseTitle = loading ? "Loading…" : accessInfo?.title || "Course";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--background)] to-[var(--secondary)] py-8 sm:py-12">
@@ -223,17 +223,16 @@ export default function CoursePaymentPage() {
         )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-          {/* Thông tin khách hàng */}
           <section className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-md)] sm:p-8">
             <h1 className="text-center text-xl font-[var(--font-serif)] text-[var(--primary)] sm:text-2xl">
-              Thông Tin Của Bạn
+              Your Information
             </h1>
 
             <div className="mt-6 flex gap-3 rounded-2xl border border-[var(--border)] bg-[var(--accent)] px-4 py-3 text-sm text-[var(--foreground)]">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent-amber)]" />
               <p>
-                Khóa học và tất cả quyền lợi đi kèm sẽ được thêm vào tài khoản này sau khi quá
-                trình thanh toán thành công!
+                This course and all included benefits will be added to your account after payment
+                is completed successfully.
               </p>
             </div>
 
@@ -258,15 +257,14 @@ export default function CoursePaymentPage() {
                   <p className="mt-1.5 text-xs text-[var(--destructive)]">{fieldErrors.email}</p>
                 ) : (
                   <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted-foreground)]">
-                    Email là thông tin bắt buộc để nhận biên lai thanh toán, kích hoạt khóa học và
-                    nhận thông tin cập nhật.
+                    Email is required to receive your receipt, activate the course, and get updates.
                   </p>
                 )}
               </div>
 
               <div>
                 <label htmlFor="checkout-phone" className="mb-2 block text-sm font-semibold text-[var(--foreground)]">
-                  Số điện thoại <span className="text-[var(--destructive)]">(*)</span>
+                  Phone number <span className="text-[var(--destructive)]">(*)</span>
                 </label>
                 <div className="flex overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
                   <div className="flex items-center gap-2 border-r border-[var(--border)] bg-[var(--secondary)] px-3 text-sm text-[var(--foreground)]">
@@ -299,20 +297,20 @@ export default function CoursePaymentPage() {
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--accent-amber)] focus:ring-[var(--ring)]"
                   disabled={loading || checkoutLoading}
                 />
-                Xuất hóa đơn
+                Issue invoice
               </label>
             </div>
 
             <p className="mt-8 text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
-              Bằng việc nhấn &quot;Tiếp tục thanh toán&quot;, tôi đồng ý với{" "}
+              By clicking &quot;Continue to payment&quot;, I agree to the{" "}
               <a href="/" className="text-[var(--accent-amber-dark)] hover:underline">
-                Điều kiện &amp; Điều khoản
+                Terms &amp; Conditions
               </a>{" "}
-              và{" "}
+              and{" "}
               <a href="/" className="text-[var(--accent-amber-dark)] hover:underline">
-                Chính sách bảo mật
+                Privacy Policy
               </a>{" "}
-              của Abroad Consultancy.
+              of Abroad Consultancy.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -323,7 +321,7 @@ export default function CoursePaymentPage() {
                 onClick={() => navigate("/courses")}
                 disabled={checkoutLoading}
               >
-                Đổi tài khoản
+                Back to courses
               </Button>
               <Button
                 type="button"
@@ -332,35 +330,34 @@ export default function CoursePaymentPage() {
                 disabled={loading || checkoutLoading || accessInfo?.isFree}
                 onClick={startCheckout}
               >
-                {checkoutLoading ? "Đang chuyển tới VNPay…" : "Tiếp tục thanh toán"}
+                {checkoutLoading ? "Redirecting to VNPay…" : "Continue to payment"}
                 {!checkoutLoading && <ArrowRight className="h-5 w-5" />}
               </Button>
             </div>
           </section>
 
-          {/* Chi tiết đơn hàng */}
           <section className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-md)] sm:p-8">
             <h2 className="text-center text-xl font-[var(--font-serif)] text-[var(--primary)] sm:text-2xl">
-              Chi tiết đơn hàng
+              Order summary
             </h2>
 
             <div className="mt-8">
-              <p className="text-sm font-semibold text-[var(--foreground)]">Sản phẩm:</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">Product:</p>
               <div className="mt-3 flex items-start justify-between gap-4">
                 <div className="flex items-start gap-2 text-sm text-[var(--foreground)]">
                   <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-amber)]" />
                   <span>{courseTitle}</span>
                 </div>
                 <span className="shrink-0 text-sm font-medium text-[var(--foreground)]">
-                  {loading ? "…" : accessInfo?.isFree ? "Miễn phí" : formatCheckoutVnd(amountVnd)}
+                  {loading ? "…" : accessInfo?.isFree ? "Free" : formatCheckoutVnd(amountVnd)}
                 </span>
               </div>
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--border)] pt-5">
-              <span className="text-sm font-semibold text-[var(--foreground)]">Tổng giá bán:</span>
+              <span className="text-sm font-semibold text-[var(--foreground)]">Subtotal:</span>
               <span className="text-sm font-bold text-[var(--foreground)]">
-                {loading ? "…" : accessInfo?.isFree ? "Miễn phí" : formatCheckoutVnd(amountVnd)}
+                {loading ? "…" : accessInfo?.isFree ? "Free" : formatCheckoutVnd(amountVnd)}
               </span>
             </div>
 
@@ -369,7 +366,7 @@ export default function CoursePaymentPage() {
                 htmlFor="checkout-coupon"
                 className="mb-2 block text-sm font-semibold text-[var(--foreground)]"
               >
-                Mã khuyến mãi
+                Coupon code
               </label>
               <div className="flex overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
                 <input
@@ -377,7 +374,7 @@ export default function CoursePaymentPage() {
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="Nhập mã khuyến mãi"
+                  placeholder="Enter coupon code"
                   className="flex-1 px-4 py-2.5 text-sm outline-none placeholder:text-[var(--muted-foreground)] focus:ring-2 focus:ring-[var(--ring)]"
                   disabled={loading || checkoutLoading}
                 />
@@ -387,7 +384,7 @@ export default function CoursePaymentPage() {
                   className="border-l border-[var(--border)] bg-[var(--secondary)] px-4 text-sm font-semibold text-[var(--accent-amber-dark)] hover:bg-[var(--accent)] disabled:opacity-50"
                   disabled={loading || checkoutLoading}
                 >
-                  Áp dụng
+                  Apply
                 </button>
               </div>
               {couponMessage && (
@@ -396,16 +393,16 @@ export default function CoursePaymentPage() {
             </div>
 
             <div className="mt-6 flex items-center justify-between">
-              <span className="text-sm font-bold text-[var(--foreground)]">Giá bán sau khuyến mãi</span>
+              <span className="text-sm font-bold text-[var(--foreground)]">Total due</span>
               <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-amber)] to-[var(--accent-coral)]">
-                {loading ? "…" : accessInfo?.isFree ? "Miễn phí" : formatCheckoutVnd(finalAmountVnd)}
+                {loading ? "…" : accessInfo?.isFree ? "Free" : formatCheckoutVnd(finalAmountVnd)}
               </span>
             </div>
 
             <p className="mt-8 text-center text-sm text-[var(--muted-foreground)]">
-              Bạn vẫn còn phân vân?{" "}
+              Still have questions?{" "}
               <a href="/advisor" className="font-medium text-[var(--accent-amber-dark)] hover:underline">
-                Liên hệ tư vấn thêm →
+                Contact an advisor →
               </a>
             </p>
           </section>

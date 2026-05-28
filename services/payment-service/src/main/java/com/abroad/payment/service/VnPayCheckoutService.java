@@ -20,9 +20,13 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class VnPayCheckoutService {
+
+    private static final Logger log = LoggerFactory.getLogger(VnPayCheckoutService.class);
 
     private static final String VERSION = "2.1.0";
     private static final String COMMAND = "pay";
@@ -34,16 +38,19 @@ public class VnPayCheckoutService {
     private final PaymentRepository paymentRepository;
     private final BillingSubscriptionService billingSubscriptionService;
     private final CourseEnrollmentClient courseEnrollmentClient;
+    private final SavedPaymentMethodService savedPaymentMethodService;
 
     public VnPayCheckoutService(
             VnpayProperties vnpay,
             PaymentRepository paymentRepository,
             BillingSubscriptionService billingSubscriptionService,
-            CourseEnrollmentClient courseEnrollmentClient) {
+            CourseEnrollmentClient courseEnrollmentClient,
+            SavedPaymentMethodService savedPaymentMethodService) {
         this.vnpay = vnpay;
         this.paymentRepository = paymentRepository;
         this.billingSubscriptionService = billingSubscriptionService;
         this.courseEnrollmentClient = courseEnrollmentClient;
+        this.savedPaymentMethodService = savedPaymentMethodService;
     }
 
     public boolean isReady() {
@@ -75,6 +82,8 @@ public class VnPayCheckoutService {
             if (req.billingCycle() == null || req.billingCycle().isBlank()) {
                 throw new IllegalArgumentException("billingCycle là bắt buộc cho thanh toán gói");
             }
+            billingSubscriptionService.validateSubscriptionCheckout(
+                    userId, req.planCode(), req.billingCycle());
         }
         long amountMinor = amountVnd.multiply(BigDecimal.valueOf(100)).longValueExact();
 
@@ -109,13 +118,22 @@ public class VnPayCheckoutService {
         fields.put("vnp_ReturnUrl", vnpay.getReturnUrl());
         fields.put("vnp_CreateDate", CREATE_FMT.format(now));
         fields.put("vnp_IpAddr", clientIp);
+        // VNPay expects this param; include it in the signed parameter set.
+        fields.put("vnp_SecureHashType", "HmacSHA512");
         if (req.bankCode() != null && !req.bankCode().isBlank()) {
             fields.put("vnp_BankCode", req.bankCode());
         }
 
         VnPayCrypto.BuildResult built = VnPayCrypto.buildSignedQuery(fields);
         String secureHash = VnPayCrypto.hmacSha512Hex(vnpay.getHashSecret(), built.hashData());
-        String paymentUrl = vnpay.getPayUrl() + "?" + built.queryWithoutHash() + "&vnp_SecureHash=" + secureHash;
+        String paymentUrl =
+                vnpay.getPayUrl() + "?" + built.queryWithoutHash() + "&vnp_SecureHash=" + secureHash;
+
+        // Debugging aid: never log hashSecret; safe to log signData + final URL.
+        if (log.isDebugEnabled()) {
+            log.debug("VNPay create url: txnRef={}, hashData={}", txnRef, built.hashData());
+            log.debug("VNPay create url: paymentUrl={}", paymentUrl);
+        }
 
         return new VnpayCreateResponse(id, paymentUrl);
     }
@@ -200,6 +218,7 @@ public class VnPayCheckoutService {
                 courseEnrollmentClient.enrollAfterPayment(p.getUserId(), p.getCourseId());
             } else {
                 billingSubscriptionService.applySuccessfulSubscriptionPayment(p);
+                savedPaymentMethodService.saveFromSuccessfulVnPayPayment(p.getUserId(), params, p);
             }
         }
         return p.getStatus();

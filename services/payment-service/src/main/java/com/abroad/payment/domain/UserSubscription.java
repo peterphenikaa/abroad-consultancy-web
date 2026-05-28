@@ -29,6 +29,19 @@ public class UserSubscription {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** true = user cancelled auto-renewal; access continues until expires_at. */
+    @Column(name = "cancel_at_period_end", nullable = false)
+    private boolean cancelAtPeriodEnd = false;
+
+    @Column(name = "auto_renew_enabled", nullable = false)
+    private boolean autoRenewEnabled = true;
+
+    @Column(name = "last_renewal_attempt_at")
+    private Instant lastRenewalAttemptAt;
+
+    @Column(name = "renewal_failure_reason", length = 500)
+    private String renewalFailureReason;
+
     public String getUserId() {
         return userId;
     }
@@ -75,5 +88,37 @@ public class UserSubscription {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isCancelAtPeriodEnd() {
+        return cancelAtPeriodEnd;
+    }
+
+    public void setCancelAtPeriodEnd(boolean cancelAtPeriodEnd) {
+        this.cancelAtPeriodEnd = cancelAtPeriodEnd;
+    }
+
+    public boolean isAutoRenewEnabled() {
+        return autoRenewEnabled;
+    }
+
+    public void setAutoRenewEnabled(boolean autoRenewEnabled) {
+        this.autoRenewEnabled = autoRenewEnabled;
+    }
+
+    public Instant getLastRenewalAttemptAt() {
+        return lastRenewalAttemptAt;
+    }
+
+    public void setLastRenewalAttemptAt(Instant lastRenewalAttemptAt) {
+        this.lastRenewalAttemptAt = lastRenewalAttemptAt;
+    }
+
+    public String getRenewalFailureReason() {
+        return renewalFailureReason;
+    }
+
+    public void setRenewalFailureReason(String renewalFailureReason) {
+        this.renewalFailureReason = renewalFailureReason;
     }
 }

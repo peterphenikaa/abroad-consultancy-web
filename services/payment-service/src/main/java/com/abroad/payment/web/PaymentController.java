@@ -72,14 +72,27 @@ public class PaymentController {
         return paymentService.listForUser(userId);
     }
 
-    /** Đăng ký theo user (JWT sub → x-user-id); mỗi user một dòng, tạo mặc định basic nếu chưa có. */
+    /** Gói đăng ký hiện tại (chỉ trả về sau khi user đã thanh toán ít nhất một lần). */
     @GetMapping("/subscription/me")
     public ResponseEntity<SubscriptionMeResponse> subscriptionMe(
             @RequestHeader("x-user-id") String userId) {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(billingSubscriptionService.getOrCreateForUser(userId));
+        return billingSubscriptionService
+                .getForUser(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Hủy gia hạn tự động; quyền dùng gói giữ đến expires_at. */
+    @PostMapping("/subscription/cancel")
+    public ResponseEntity<SubscriptionMeResponse> cancelSubscription(
+            @RequestHeader("x-user-id") String userId) {
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(billingSubscriptionService.cancelAtPeriodEnd(userId));
     }
 
     /** Kiểm tra quyền học khóa (đã thanh toán / miễn phí / đã ghi danh). */

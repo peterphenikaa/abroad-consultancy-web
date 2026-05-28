@@ -135,13 +135,13 @@ export default function CoursesPage() {
             <section>
               <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-6 flex items-center gap-2">
                 <ShoppingBag className="w-6 h-6 text-[var(--accent-amber)]" />
-                Khám phá khóa học
+                Explore courses
               </h2>
               <div className="grid sm:grid-cols-2 gap-4 mb-10">
                 {isLoadingCatalog ? (
-                  <p className="text-neutral-500 col-span-2">Đang tải khóa học…</p>
+                  <p className="text-neutral-500 col-span-2">Loading courses…</p>
                 ) : catalogCourses.length === 0 ? (
-                  <p className="text-neutral-500 col-span-2">Chưa có khóa học nào.</p>
+                  <p className="text-neutral-500 col-span-2">No courses available yet.</p>
                 ) : (
                   catalogCourses.map((course) => {
                     const courseId = course.courseId || course.id;
@@ -154,18 +154,18 @@ export default function CoursesPage() {
                         <CardContent className="p-5 space-y-4">
                           <div className="space-y-2">
                             <Badge variant="secondary" className="font-normal border-0 text-xs">
-                              {course.subject || "Khóa học"}
+                              {course.subject || "Course"}
                             </Badge>
                             <h3 className="text-lg font-bold font-[var(--font-serif)] text-neutral-900">
                               {course.title}
                             </h3>
                             <p className="text-sm text-neutral-500 line-clamp-2">
-                              {course.description || "Nội dung chất lượng, lộ trình rõ ràng."}
+                              {course.description || "Quality content with a clear learning path."}
                             </p>
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <span className="font-semibold text-[var(--primary)]">
-                              {course.isFree ? "Miễn phí" : formatMoneyVnd(priceVnd)}
+                              {course.isFree ? "Free" : formatMoneyVnd(priceVnd)}
                             </span>
                             <Button
                               variant="gradient"
@@ -173,7 +173,7 @@ export default function CoursesPage() {
                               disabled={openingCourseId === courseId}
                               onClick={() => handleOpenCourse({ ...course, id: courseId, courseId })}
                             >
-                              {openingCourseId === courseId ? "Đang kiểm tra…" : "Học ngay"}
+                              {openingCourseId === courseId ? "Checking access…" : "Start learning"}
                             </Button>
                           </div>
                         </CardContent>
