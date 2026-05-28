@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import "./styles/fonts.css";
+@import "tailwindcss";
 @import "./styles/theme.css";
 @config "../tailwind.config.js";
 
@@ -60,3 +60,4 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--accent-amber);
 }
+
