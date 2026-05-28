@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
 }
 
 model Course {
@@ -29,6 +30,7 @@ model Course {
 
   modules     Module[]
   enrollments Enrollment[]
+  payments    Payment[]
 }
 
 model Module {
@@ -176,8 +178,46 @@ enum ContentType {
   IMAGE
   INFOGRAPHIC
   AUDIO
+  OTHER
   DICTATION
   QUIZ
   PRACTICE_WRITING
   PRACTICE_SPEAKING
+}
+
+/// Đăng ký (gói + chu kỳ) theo user_id = JWT sub từ auth-service.
+model UserSubscription {
+  userId        String   @id @map("user_id") @db.VarChar(255)
+  planCode      String   @map("plan_code") @db.VarChar(32)
+  billingCycle  String   @map("billing_cycle") @db.VarChar(16)
+  expiresAt     DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt     DateTime @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_subscriptions")
+}
+
+/// Bảng thanh toán (Spring payment-service + Prisma). Đồng bộ schema với JPA entity.
+model Payment {
+  id          String   @id @db.Uuid
+  userId      String   @map("user_id") @db.VarChar(255)
+  /// Thanh toán mua khóa học (tùy chọn). userId vẫn là chuỗi vì bảng User nằm ở auth-service, không có FK DB ở schema content.
+  courseId    String?  @map("course_id") @db.Uuid
+  course      Course?  @relation(fields: [courseId], references: [courseId], onDelete: SetNull)
+  amount      Decimal  @db.Decimal(19, 2)
+  currency    String   @db.VarChar(3)
+  description String?  @db.VarChar(500)
+  planCode    String?  @map("plan_code") @db.VarChar(32)
+  billingCycle String? @map("billing_cycle") @db.VarChar(16)
+  /// PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED (string để khớp JPA EnumType.STRING)
+  status      String   @db.VarChar(32)
+  provider    String?  @db.VarChar(32)
+  providerRef String?  @map("provider_ref") @db.VarChar(255)
+  createdAt   DateTime @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_payments_user_id")
+  @@index([courseId], map: "idx_payments_course_id")
+  @@index([status], map: "idx_payments_status")
+  @@map("payments")
 }

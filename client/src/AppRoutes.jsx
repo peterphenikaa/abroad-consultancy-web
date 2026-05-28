@@ -10,6 +10,7 @@ import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import Navigation from "./components/Navigation.jsx";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 import QuizExecutionPage from "./pages/courses/QuizExecutionPage.jsx";
+import CoursePaymentPage from "./pages/courses/CoursePaymentPage.jsx";
 
 const pageVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(2px)" },
@@ -20,11 +21,18 @@ const pageVariants = {
 export default function AppRoutes() {
   const location = useLocation();
 
-  const isCourseDetailPage = location.pathname.startsWith('/courses/') && location.pathname !== '/courses';
+  const isCourseDetailPage =
+    location.pathname.startsWith("/courses/") &&
+    location.pathname !== "/courses" &&
+    !location.pathname.endsWith("/payment");
+
+  const isCourseCheckoutPage =
+    location.pathname.startsWith("/courses/") &&
+    location.pathname.endsWith("/payment");
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      {!isCourseDetailPage && <Navigation />}
+      {!isCourseDetailPage && !isCourseCheckoutPage && <Navigation />}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={location.pathname}
@@ -42,6 +50,7 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/courses/:courseId/payment" element={<CoursePaymentPage />} />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             <Route path="/courses/:courseId/quiz/:contentId/take" element={<QuizExecutionPage />} />
 

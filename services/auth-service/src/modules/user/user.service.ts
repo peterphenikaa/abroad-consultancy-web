@@ -22,6 +22,7 @@ export class UserService {
   static async getMe(userId: string) {
     const user = await prismaClient.user.findUnique({
       where: { id: userId },
+      include: { userProfile: true },
     });
 
     if (!user) {
@@ -38,7 +39,7 @@ export class UserService {
    * @returns Updated user object without sensitive fields
    */
   static async updateMe(userId: string, data: UpdateProfileDTO) {
-    const { fullName, bio, avatarUrl, educationalLevel, learningGoals } = data;
+    const { fullName, bio, avatarUrl, phone, educationalLevel, learningGoals } = data;
 
     // Upsert for 1-to-1 relation
     const updatedUser = await prismaClient.user.update({
@@ -51,8 +52,8 @@ export class UserService {
         // 2. Upsert user profile (if exists, update; if not, create)
         userProfile: {
           upsert: {
-            create: { bio, avatarUrl, educationalLevel, learningGoals },
-            update: { bio, avatarUrl, educationalLevel, learningGoals },
+            create: { bio, avatarUrl, phone, educationalLevel, learningGoals },
+            update: { bio, avatarUrl, phone, educationalLevel, learningGoals },
           },
         },
       },

@@ -119,8 +119,10 @@ const LessonService = {
         return lesson;
     },
 
-    //mock tạm userId để test: 11111111-1111-1111-1111-111111111111
-    markContentCompleted: async (contentId, userId="11111111-1111-1111-1111-111111111111") => {
+    markContentCompleted: async (contentId, userId) => {
+        if (!userId) {
+            throw createError('Unauthorized', 401);
+        }
         const existingProgress = await prisma.contentProgress.findUnique({
             where: {
                 userId_contentId: { userId, contentId }

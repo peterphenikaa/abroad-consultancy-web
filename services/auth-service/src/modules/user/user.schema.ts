@@ -13,6 +13,11 @@ export const updateProfileSchema = z.object({
 
   avatarUrl: z.url('Invalid URL format for avatar').optional(),
 
+  phone: z
+    .string()
+    .regex(/^\+?[0-9]{9,15}$/, 'Invalid phone number')
+    .optional(),
+
   educationalLevel: z
     .string()
     .max(100, 'Education level must be at most 100 characters')

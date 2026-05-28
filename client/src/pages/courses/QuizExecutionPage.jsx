@@ -9,8 +9,17 @@ import { cn } from "../../components/ui/utils";
 import AttemptHistory from './components/AttemptHistory';
 import StandardQuizLayout from './components/StandardQuizLayout';
 import ReadingQuizLayout from './components/ReadingQuizLayout';
+import { CourseAccessGate } from '../../hooks/useCourseAccessGuard.jsx';
 
 export default function QuizExecutionPage() {
+    return (
+        <CourseAccessGate>
+            <QuizExecutionPageInner />
+        </CourseAccessGate>
+    );
+}
+
+function QuizExecutionPageInner() {
     const { courseId, contentId } = useParams();
     const navigate = useNavigate();
 

@@ -49,7 +49,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://cambridge-kong:8000",
+        target: process.env.VITE_API_PROXY_TARGET || "http://cambridge-kong:8000",
         changeOrigin: true,
       },
     },

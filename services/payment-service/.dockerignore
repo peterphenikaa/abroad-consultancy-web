@@ -1,0 +1,7 @@
+### Maven / IDE
+target/
+.idea/
+*.iml
+.project
+.classpath
+.settings/

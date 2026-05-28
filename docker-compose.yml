@@ -76,6 +76,7 @@ services:
       - MINIO_PORT=9000
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=password123
+      - PAYMENT_WEBHOOK_SECRET=${PAYMENT_WEBHOOK_SECRET:-dev-webhook-secret}
     volumes:
       - ./services/auth-service/keys:/app/keys:cached
       - ./services/shared:/app/node_modules/@cambridge/shared:ro
@@ -87,15 +88,40 @@ services:
     networks:
       - app-network
 
+  payment-service:
+    build: ./services/payment-service
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: "3008"
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-dev-webhook-secret}
+      CONTENT_SERVICE_URL: http://content-service:3000
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-}
+      VNPAY_FRONTEND_URL: ${VNPAY_FRONTEND_URL:-http://localhost:80/payment}
+      VNPAY_DEBUG_LOG: ${VNPAY_DEBUG_LOG:-INFO}
+      BILLING_AUTO_RENEW_ENABLED: ${BILLING_AUTO_RENEW_ENABLED:-true}
+      BILLING_SIMULATE_INSUFFICIENT_FUNDS: ${BILLING_SIMULATE_INSUFFICIENT_FUNDS:-false}
+      PAYMENT_PENDING_TTL_MINUTES: ${PAYMENT_PENDING_TTL_MINUTES:-15}
+      PAYMENT_PENDING_CLEANUP_ENABLED: ${PAYMENT_PENDING_CLEANUP_ENABLED:-true}
+    ports:
+      - "3008:3008"
+    depends_on:
+      - content-service
+    networks:
+      - app-network
+
   # Các service khác (Bật lên khi code)
   # exam-service:
   #   build: ./services/exam-service
   #   env_file: .env
   # quiz-service:
   #   build: ./services/quiz-service
-  #   env_file: .env
-  # payment-service:
-  #   build: ./services/payment-service
   #   env_file: .env
   # notification-service:
   #   build: ./services/notification-service
@@ -114,6 +140,8 @@ services:
     build:
       context: ./client
     env_file: .env
+    environment:
+      - VITE_API_PROXY_TARGET=http://cambridge-kong:8000
     ports:
       - "81:80"
     volumes:
