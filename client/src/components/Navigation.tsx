@@ -44,7 +44,7 @@ export default function Navigation() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const visibleItems = isAuthenticated
-    ? [...publicItems, ...privateItems]
+    ? [...publicItems.filter((item) => item.path !== "/"), ...privateItems]
     : publicItems;
 
   useEffect(() => {
