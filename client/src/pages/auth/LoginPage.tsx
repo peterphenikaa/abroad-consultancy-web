@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
-import { ImageWithFallback } from "../../components/ui/ImageWithFallback";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { motion } from "framer-motion";
 import { Button, Checkbox, Input } from "@/components/ui";
 
