@@ -124,6 +124,11 @@ export class AuthController {
         access_token: result.newAccessToken,
         token_type: 'Bearer',
         expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          role: result.user.role,
+        },
       });
     } catch (error) {
       next(error);

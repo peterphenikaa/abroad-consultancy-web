@@ -1,9 +1,6 @@
 const courseService = require('../services/courseService');
 const { sendError } = require('../utils/appError');
-
-function resolveUserId(req) {
-    return req.user?.id || req.headers['x-user-id'] || '34e399cb-3dac-4868-9cd2-519ef32a4f81';
-}
+const { resolveUserId } = require('../utils/resolveUserId');
 
 const WEBHOOK_HEADER = 'x-payment-webhook-secret';
 

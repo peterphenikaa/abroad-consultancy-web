@@ -19,12 +19,18 @@ const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml'));
 app.use('/content-service-doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // JWT auth middleware for all /api/v1 routes
+const UUID_SEGMENT = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+
 app.use('/api/v1', createAuthMiddleware({
   publicPaths: [
-    { path: '/courses', methods: ['GET'] },
-    { path: '/contents', methods: ['GET', 'POST'] },
-    { path: '/lessons', methods: ['GET', 'POST'] },
-    { path: '/categories', methods: ['GET'] },
+    { path: '/courses', methods: ['GET'], exact: true },
+    { regex: `^/courses/${UUID_SEGMENT}$`, methods: ['GET'] },
+    { regex: `^/courses/${UUID_SEGMENT}/access$`, methods: ['GET'] },
+    { path: '/contents', methods: ['GET'] },
+    { regex: `^/contents/${UUID_SEGMENT}$`, methods: ['GET'] },
+    { path: '/lessons', methods: ['GET'] },
+    { regex: `^/lessons/${UUID_SEGMENT}$`, methods: ['GET'] },
+    { path: '/categories', methods: ['GET'], exact: true },
   ],
 }));
 

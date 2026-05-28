@@ -7,11 +7,13 @@ import AppRoutes from './AppRoutes.jsx'
 import './styles/fonts.css'
 import './index.css'
 import axios from 'axios'
+import { AuthProvider } from './contexts/AuthContext'
+import { getLocalAccessToken } from './services/apiClient'
 import { syncServerTime, cleanupExpiredData } from './services/db'
 
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
+  const token = getLocalAccessToken();
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -39,9 +41,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppRoutes />
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </BrowserRouter>
-      {/* DevTools góc dưới màn hình khi dev */}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>,

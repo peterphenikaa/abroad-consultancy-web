@@ -1,10 +1,7 @@
 const storageService = require('../services/storageService');
 const contentService = require('../services/contentService');
 const { sendError } = require('../utils/appError');
-
-function resolveUserId(req) {
-    return req.user?.id || req.headers['x-user-id'] || '34e399cb-3dac-4868-9cd2-519ef32a4f81';
-}
+const { resolveUserId } = require('../utils/resolveUserId');
 
 const ContentController = {
     createContent: async (req, res) => {
