@@ -62,7 +62,7 @@ export function buildAuthHeaders(extra = {}) {
 
 /** @returns {Promise<{ hasAccess: boolean, requiresLogin?: boolean, isFree?: boolean, title?: string, price?: number }>} */
 export async function fetchCourseAccess(courseId) {
-  const res = await fetch(`/api/v1/courses/${courseId}/access`, {
+  const res = await fetch(`/api/payments/courses/${courseId}/access`, {
     headers: buildAuthHeaders(),
   });
   if (!res.ok) {
