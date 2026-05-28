@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const features = [
   {
@@ -28,7 +29,8 @@ const features = [
   {
     icon: BookOpen,
     title: "Exam Preparation Guidance",
-    description: "Personalized study plans for IELTS, TOEFL, GRE, GMAT, and more.",
+    description:
+      "Personalized study plans for IELTS, TOEFL, GRE, GMAT, and more.",
   },
   {
     icon: Shield,
@@ -63,6 +65,8 @@ const testimonials = [
 ];
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -84,7 +88,10 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <motion.div style={{ y: heroY, opacity: heroOpacity }} className="space-y-8">
+            <motion.div
+              style={{ y: heroY, opacity: heroOpacity }}
+              className="space-y-8"
+            >
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -109,9 +116,9 @@ export default function LandingPage() {
                   </span>
                 </h1>
                 <p className="text-lg sm:text-xl text-[var(--muted-foreground)] max-w-xl leading-relaxed">
-                  Navigate your study abroad journey with AI-powered insights. From
-                  university selection to visa applications, we simplify every step
-                  of your global education adventure.
+                  Navigate your study abroad journey with AI-powered insights.
+                  From university selection to visa applications, we simplify
+                  every step of your global education adventure.
                 </p>
               </motion.div>
 
@@ -121,22 +128,28 @@ export default function LandingPage() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <Button
                     variant="gradient"
                     size="lg"
                     className="group"
-                    onClick={() => window.alert("Hook this up to your advisor flow.")}
+                    onClick={() => navigate("/login")}
                   >
                     Start Your Journey
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={() => window.alert("Hook this up to your university search.")}
+                    onClick={() => navigate("/search")}
                   >
                     Explore Universities
                   </Button>
@@ -180,8 +193,12 @@ export default function LandingPage() {
               <div className="relative">
                 <motion.div
                   animate={{ y: [0, -20, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative z-10"
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="relative z-0"
                 >
                   <div className="aspect-[4/5]">
                     <img
@@ -261,8 +278,8 @@ export default function LandingPage() {
               Everything you need to succeed abroad
             </h2>
             <p className="text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto">
-              Comprehensive tools and insights powered by advanced AI to guide your
-              entire study abroad journey.
+              Comprehensive tools and insights powered by advanced AI to guide
+              your entire study abroad journey.
             </p>
           </motion.div>
 
@@ -310,8 +327,8 @@ export default function LandingPage() {
               Success stories from around the world
             </h2>
             <p className="text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto">
-              Join thousands of students who have achieved their dream of studying
-              abroad.
+              Join thousands of students who have achieved their dream of
+              studying abroad.
             </p>
           </motion.div>
 
@@ -333,7 +350,9 @@ export default function LandingPage() {
                     loading="lazy"
                   />
                   <div>
-                    <div className="font-semibold text-[var(--foreground)]">{t.name}</div>
+                    <div className="font-semibold text-[var(--foreground)]">
+                      {t.name}
+                    </div>
                     <div className="text-sm text-[var(--accent-amber)]">
                       {t.university}
                     </div>
@@ -363,26 +382,36 @@ export default function LandingPage() {
               Ready to begin your global education journey?
             </h2>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Get personalized university recommendations, application guidance, and
-              visa support in minutes.
+              Get personalized university recommendations, application guidance,
+              and visa support in minutes.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   size="lg"
                   className="bg-white text-[var(--primary)] hover:bg-white/90 shadow-xl font-semibold"
-                  onClick={() => window.alert("Hook this up to your signup flow.")}
+                  onClick={() =>
+                    window.alert("Hook this up to your signup flow.")
+                  }
                 >
                   Get Started Free
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   size="lg"
                   className="bg-white/10 backdrop-blur-sm text-white border-2 border-white/20 hover:bg-white/20"
-                  onClick={() => window.alert("Hook this up to your courses page.")}
+                  onClick={() =>
+                    window.alert("Hook this up to your courses page.")
+                  }
                 >
                   View Courses
                 </Button>
@@ -405,4 +434,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

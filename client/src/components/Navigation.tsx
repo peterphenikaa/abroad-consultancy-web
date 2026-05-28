@@ -133,7 +133,10 @@ export default function Navigation() {
               {isAuthenticated ? (
                 <div className="relative">
                   <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserMenuOpen(!userMenuOpen);
+                    }}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--accent-amber)] to-[var(--accent-coral)] flex items-center justify-center text-white text-sm font-bold">
@@ -143,9 +146,15 @@ export default function Navigation() {
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[var(--border)] py-2 z-50">
-                      <div className="px-4 py-2 border-b border-[var(--border)]">
-                        <p className="text-sm font-medium text-[var(--foreground)] truncate">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[var(--border)] py-2 z-50"
+                    >
+                      <div className="px-4 py-3 border-b border-[var(--border)]">
+                        <p className="text-sm font-semibold text-[var(--foreground)]">
+                          {user?.email?.split("@")[0] || "User"}
+                        </p>
+                        <p className="text-xs text-[var(--muted-foreground)] mt-0.5 truncate">
                           {user?.email}
                         </p>
                       </div>
@@ -154,7 +163,7 @@ export default function Navigation() {
                           logout();
                           setUserMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
                         Log out

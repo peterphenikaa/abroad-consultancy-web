@@ -23,7 +23,6 @@ export const authService = {
       credential,
     );
 
-    // if succ -> take the token
     const token = normalizeAccessToken(response.data?.access_token);
     if (token) {
       setLocalAccessToken(token);
