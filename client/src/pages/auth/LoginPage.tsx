@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { motion } from "framer-motion";
@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +23,8 @@ export function LoginPage() {
 
     try {
       await login({ email, password });
-      navigate("/dashboard");
+      const from = (location.state as { from?: string })?.from || "/dashboard";
+      navigate(from, { replace: true });
     } catch (err: any) {
       const code = err?.response?.data?.error?.code;
       const detail = err?.response?.data?.error?.detail;
