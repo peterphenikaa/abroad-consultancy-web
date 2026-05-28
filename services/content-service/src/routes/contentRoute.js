@@ -10,7 +10,8 @@ router.patch('/:id', ContentController.updateContent);
 router.delete('/:id', ContentController.deleteContent);
 router.get('/', ContentController.getAllContent);
 router.get('/:id', ContentController.getContentById);
+router.get('/:id/offline', ContentController.getOfflineData);
 router.post('/:id/submit', ContentController.submitQuiz);
 router.get('/:id/quiz-overview', ContentController.getQuizOverview);
 
-module.exports = router;
+module.exports = router; 

@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/api-error.util';
 import { UserService } from './user.service';
 import { updateProfileSchema } from './user.schema';
 import z from 'zod';
+import { AuthUser } from '../../types/express';
 
 export class UserController {
   /**
@@ -10,13 +11,14 @@ export class UserController {
    */
   static async getMe(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user?.userId;
+      const user = req.user as AuthUser;
+      const userId = user?.id;
       if (!userId) {
         throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED');
       }
 
-      const user = await UserService.getMe(userId);
-      res.status(200).json({ success: true, data: user });
+      const userInfo = await UserService.getMe(userId);
+      res.status(200).json({ success: true, data: userInfo });
     } catch (error) {
       next(error);
     }
@@ -27,7 +29,8 @@ export class UserController {
    */
   static async updateMe(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user?.userId;
+      const user = req.user as AuthUser;
+      const userId = user?.id;
       if (!userId) {
         throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED');
       }

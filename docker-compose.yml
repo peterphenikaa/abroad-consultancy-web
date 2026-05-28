@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==========================================
   # 🗄️ INFRASTRUCTURE & DATABASES (LOCAL)
@@ -44,67 +42,9 @@ services:
     networks:
       - app-network
 
-  redis:
-    image: redis:7-alpine
-    # Không publish port ra host — tránh xung đột 6379/6380; service trong compose dùng redis:6379
-    networks:
-      - app-network
-
-  # SMTP giả lập cho auth-service (OTP / mail), UI: http://localhost:1080
-  maildev:
-    image: maildev/maildev:2.0.5
-    ports:
-      - "1080:1080"
-      - "1025:1025"
-    networks:
-      - app-network
-
   # ==========================================
   # ⚙️ MICROSERVICES
   # ==========================================
-  api-gateway:
-    build: ./api-gateway
-    env_file: .env
-    environment:
-      - PORT=8080
-      - CONTENT_SERVICE_URL=http://content-service:3000
-      - REDIS_URL=redis://redis:6379
-      - JWT_PUBLIC_KEY=@dev-keys/jwt-public.pem
-      - PAYMENT_TEST_USER_ID=${PAYMENT_TEST_USER_ID:-}
-    volumes:
-      - ./dev-keys:/app/dev-keys:ro
-    ports:
-      - "8081:8080"
-    depends_on:
-      - auth-service
-      - user-service
-      - content-service
-      - payment-service
-      - redis
-    networks:
-      - app-network
-
-  auth-service:
-    build: ./services/auth-service
-    env_file: .env
-    environment:
-      - PORT=3001
-      - KAFKA_BROKER=kafka:9092
-      - REDIS_URL=redis://redis:6379
-      - SMTP_HOST=maildev
-      - SMTP_PORT=1025
-      - SMTP_USER=dev
-      - SMTP_PASS=dev
-      - JWT_PUBLIC_KEY=@dev-keys/jwt-public.pem
-      - JWT_PRIVATE_KEY=@dev-keys/jwt-private.pem
-    volumes:
-      - ./dev-keys:/usr/src/app/dev-keys:ro
-    depends_on:
-      - kafka
-      - redis
-      - maildev
-    networks:
-      - app-network
 
   user-service:
     build: ./services/user-service
@@ -137,6 +77,9 @@ services:
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=password123
       - PAYMENT_WEBHOOK_SECRET=${PAYMENT_WEBHOOK_SECRET:-dev-webhook-secret}
+    volumes:
+      - ./services/auth-service/keys:/app/keys:cached
+      - ./services/shared:/app/node_modules/@cambridge/shared:ro
     ports:
       - "3000:3000"
     depends_on:
@@ -198,21 +141,19 @@ services:
       context: ./client
     env_file: .env
     environment:
-      # Trong container, localhost ≠ máy host — phải dùng tên service Docker
-      - VITE_API_PROXY_TARGET=http://api-gateway:8080
+      - VITE_API_PROXY_TARGET=http://cambridge-kong:8000
     ports:
       - "81:80"
     volumes:
       - ./client:/app
       - /app/node_modules
-    depends_on:
-      - api-gateway
     networks:
       - app-network
 
 networks:
   app-network:
-    driver: bridge
+    name: app-network
+    external: true
 
 volumes:
   minio_data:

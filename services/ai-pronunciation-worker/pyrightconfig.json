@@ -1,0 +1,20 @@
+{
+  "include": ["app", "tests"],
+  "exclude": ["scripts"],
+  "venvPath": "../..",
+  "venv": ".venv",
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "reportCallInDefaultInitializer": "none",
+  "reportMissingTypeStubs": "none",
+  "reportPrivateImportUsage": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportAny": "none",
+  "reportExplicitAny": "none",
+  "reportUnannotatedClassAttribute": "none",
+  "reportUnnecessaryComparison": "none",
+  "reportUnusedImport": "none",
+  "executionEnvironments": [{ "root": "." }]
+}

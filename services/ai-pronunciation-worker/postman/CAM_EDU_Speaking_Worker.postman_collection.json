@@ -1,0 +1,222 @@
+{
+  "info": {
+    "name": "CAM_EDU Speaking Worker (APS + ASS)",
+    "description": "Import vào Postman. Chọn file audio trong tab Body → form-data (field `audio`).\n\nFixture mẫu: `tests/fixtures/audio/01_greeting.wav`\n\nWorker phải đang chạy: `py -m uvicorn app.main:app --port 8089 --reload`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8089"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Config",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "GET Pipeline Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/config/pipeline-status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "APS — Pronunciation",
+      "item": [
+        {
+          "name": "POST APS Score (shadowing)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "description": "Chọn file WAV 5–120s, vd. tests/fixtures/audio/01_greeting.wav",
+                  "src": []
+                },
+                {
+                  "key": "reference_transcript",
+                  "value": "Hello, my name is Linh and I am learning English pronunciation every day.",
+                  "type": "text"
+                },
+                {
+                  "key": "cefr_level",
+                  "value": "A2",
+                  "type": "text"
+                },
+                {
+                  "key": "target_accent",
+                  "value": "american",
+                  "type": "text"
+                },
+                {
+                  "key": "pronunciation_score_history_json",
+                  "value": "[]",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/aps/score",
+            "description": "Chấm phát âm so với script. Response: band_overall + dimensions (WER, fluency, prosody)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "ASS — IELTS Speaking",
+      "item": [
+        {
+          "name": "POST ASS Score (shadowing)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "prompt_text",
+                  "value": "Please read the following sentence aloud clearly.",
+                  "type": "text"
+                },
+                {
+                  "key": "reference_transcript",
+                  "value": "Hello, my name is Linh and I am learning English pronunciation every day.",
+                  "type": "text"
+                },
+                {
+                  "key": "cefr_level",
+                  "value": "A2",
+                  "type": "text"
+                },
+                {
+                  "key": "target_accent",
+                  "value": "american",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_part",
+                  "value": "shadowing",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_score_history_json",
+                  "value": "[]",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/ass/score"
+          }
+        },
+        {
+          "name": "POST ASS Score (Part 1 — free response)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "prompt_text",
+                  "value": "Do you enjoy reading books? Why or why not?",
+                  "type": "text"
+                },
+                {
+                  "key": "cefr_level",
+                  "value": "B1",
+                  "type": "text"
+                },
+                {
+                  "key": "target_accent",
+                  "value": "american",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_part",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_score_history_json",
+                  "value": "[]",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/ass/score",
+            "description": "Không gửi reference_transcript. Dùng audio trả lời tự do (≥5s)."
+          }
+        },
+        {
+          "name": "POST ASS Score (Part 2 — cue card)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "prompt_text",
+                  "value": "Describe a book you read recently. You should say: what it was about, why you chose it, and whether you would recommend it.",
+                  "type": "text"
+                },
+                {
+                  "key": "cefr_level",
+                  "value": "B2",
+                  "type": "text"
+                },
+                {
+                  "key": "target_accent",
+                  "value": "american",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_part",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "speaking_score_history_json",
+                  "value": "[]",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/ass/score",
+            "description": "Monologue 1–2 phút. Audio 30–120s khuyến nghị."
+          }
+        }
+      ]
+    }
+  ]
+}
