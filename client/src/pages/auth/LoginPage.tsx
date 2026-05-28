@@ -4,20 +4,37 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { motion } from "framer-motion";
 import { Button, Checkbox, Input } from "@/components/ui";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      await login({ email, password });
       navigate("/dashboard");
-    }, 1500);
+    } catch (err: any) {
+      const code = err?.response?.data?.error?.code;
+      const detail = err?.response?.data?.error?.detail;
+
+      if (code === "EMAIL_NOT_VERIFIED") {
+        setError("Please verify your email before logging in.");
+      } else {
+        setError(detail || "Invalid email or password. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,6 +113,7 @@ export function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 rounded-xl border-slate-200 hover:bg-slate-50 transition-all font-medium flex items-center justify-center gap-3"
+              onClick={() => (window.location.href = "/api/auth/google")}
             >
               <Chrome className="w-5 h-5 text-red-500" />
               Continue with Google
@@ -122,6 +140,8 @@ export function LoginPage() {
                   <Input
                     type="email"
                     placeholder="name@university.edu"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="h-12 pl-12 rounded-xl border-slate-200 focus:border-accent-amber focus:ring-accent-amber/10 transition-all"
                     required
                   />
@@ -134,7 +154,7 @@ export function LoginPage() {
                     Password
                   </label>
                   <Link
-                    to="#"
+                    to="/forgot-password"
                     className="text-sm font-semibold text-accent-violet hover:text-accent-violet-dark transition-colors"
                   >
                     Forgot Password?
@@ -145,6 +165,8 @@ export function LoginPage() {
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="h-12 pl-12 pr-12 rounded-xl border-slate-200 focus:border-accent-amber focus:ring-accent-amber/10 transition-all"
                     required
                   />
@@ -175,6 +197,12 @@ export function LoginPage() {
                 Remember me for 30 days
               </label>
             </div>
+
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                {error}
+              </div>
+            )}
 
             <Button
               type="submit"

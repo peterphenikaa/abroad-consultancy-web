@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, useLocation, Link } from "react-router";
 import { motion } from "framer-motion";
 import {
   Mail,
@@ -11,19 +11,46 @@ import {
   Chrome,
 } from "lucide-react";
 import { Button, Checkbox, ImageWithFallback, Input } from "@/components/ui";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { register } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await register({ name, email, password });
+      navigate("/login", {
+        state: { message: "Account created! Please check your email to verify your account." },
+      });
+    } catch (err: any) {
+      const detail = err?.response?.data?.error?.detail;
+      setError(detail || "Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-      navigate("/login");
-    }, 2000);
+    }
   };
 
   return (
@@ -99,6 +126,12 @@ export function SignUpPage() {
             </p>
           </div>
 
+          {location.state?.message && (
+            <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+              {location.state.message}
+            </div>
+          )}
+
           <form onSubmit={handleSignUp} className="space-y-5">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -109,6 +142,8 @@ export function SignUpPage() {
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <Input
                     placeholder="Alex Johnson"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="h-12 pl-12 rounded-xl border-slate-200 focus:border-accent-amber transition-all"
                     required
                   />
@@ -124,6 +159,8 @@ export function SignUpPage() {
                   <Input
                     type="email"
                     placeholder="alex@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="h-12 pl-12 rounded-xl border-slate-200 focus:border-accent-amber transition-all"
                     required
                   />
@@ -140,6 +177,8 @@ export function SignUpPage() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className="h-12 pl-12 rounded-xl border-slate-200 focus:border-accent-amber transition-all"
                       required
                     />
@@ -154,6 +193,8 @@ export function SignUpPage() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="h-12 pl-12 rounded-xl border-slate-200 focus:border-accent-amber transition-all"
                       required
                     />
@@ -198,6 +239,12 @@ export function SignUpPage() {
               </label>
             </div>
 
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                {error}
+              </div>
+            )}
+
             <Button
               type="submit"
               variant="gradient"
@@ -226,6 +273,7 @@ export function SignUpPage() {
             <Button
               variant="outline"
               className="w-full h-12 rounded-xl border-slate-200 hover:bg-slate-50 transition-all font-medium flex items-center justify-center gap-3"
+              onClick={() => (window.location.href = "/api/auth/google")}
             >
               <Chrome className="w-5 h-5 text-red-500" />
               Sign up with Google
