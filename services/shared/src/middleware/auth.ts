@@ -19,8 +19,16 @@ function isPublicPath(req: Request, rules: PublicPathRule[]): boolean {
   for (const rule of rules) {
     const allowedMethods = (rule.methods || ['GET']).map(m => m.toUpperCase());
     if (!allowedMethods.includes(method)) continue;
-    if (req.path === rule.path || req.path.startsWith(rule.path + '/')) {
-      return true;
+
+    if (rule.regex) {
+      const rx = new RegExp(rule.regex);
+      if (rx.test(req.path)) return true;
+    } else if (rule.exact) {
+      if (req.path === rule.path) return true;
+    } else {
+      if (req.path === rule.path || req.path.startsWith(rule.path + '/')) {
+        return true;
+      }
     }
   }
   return false;
@@ -32,33 +40,41 @@ export function createAuthMiddleware(options?: AuthMiddlewareOptions) {
 
   return function authMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
-      if (isPublicPath(req, publicPaths)) {
-        return next();
-      }
-
+      const isPublic = isPublicPath(req, publicPaths);
       const authHeader = req.headers.authorization;
+
       if (!authHeader?.startsWith('Bearer ')) {
+        if (isPublic) {
+          return next();
+        }
         res.status(401).json({ error: 'Missing or invalid Authorization header' });
         return;
       }
+
       const token = authHeader.slice(7);
+      try {
+        const payload = verifyToken(token);
+        const role = (payload.role || 'USER').toUpperCase();
+        const permissions = ROLE_PERMISSIONS[role] || [];
 
-      const payload = verifyToken(token);
-
-      const role = (payload.role || 'USER').toUpperCase();
-      const permissions = ROLE_PERMISSIONS[role] || [];
-
-      req.user = {
-        id: payload.sub,
-        email: payload.email,
-        role,
-        orgId: payload.orgId,
-        sessionId: payload.sessionId,
-        permissions,
-      };
+        req.user = {
+          id: payload.sub,
+          email: payload.email,
+          role,
+          orgId: payload.orgId,
+          sessionId: payload.sessionId,
+          permissions,
+        };
+      } catch (tokenError) {
+        if (isPublic) {
+          return next();
+        }
+        throw tokenError;
+      }
 
       next();
     } catch (error: any) {
+      console.error("JWT Verification Middleware Error:", error);
       const message = error.name === 'TokenExpiredError'
         ? 'Token expired'
         : 'Invalid token';

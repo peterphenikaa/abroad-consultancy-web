@@ -14,7 +14,8 @@ export const useDownloadContent = () => {
             if (!response.ok) {
                 throw new Error("API chưa trả về cục offline data");
             }
-            const data = await response.json();
+            const resJson = await response.json();
+            const data = resJson.data;
 
             setProgress(40);
             const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;

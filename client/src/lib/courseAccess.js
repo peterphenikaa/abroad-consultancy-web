@@ -60,8 +60,19 @@ export function buildAuthHeaders(extra = {}) {
   };
 }
 
-/** @returns {Promise<{ hasAccess: boolean, requiresLogin?: boolean, isFree?: boolean, title?: string, price?: number }>} */
 export async function fetchCourseAccess(courseId) {
+  try {
+    const res = await fetch(`/api/v1/courses/${courseId}/access`, {
+      headers: buildAuthHeaders(),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data || json;
+    }
+  } catch (err) {
+    console.warn("Local course access check failed, falling back to payment-service:", err);
+  }
+
   const res = await fetch(`/api/payments/courses/${courseId}/access`, {
     headers: buildAuthHeaders(),
   });

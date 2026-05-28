@@ -19,6 +19,9 @@
         "mongoose": "^8.16.1",
         "pg": "^8.20.0",
         "prisma": "^6.19.3",
-        "uuid": "^13.0.0"
+        "swagger-jsdoc": "^6.3.0",
+        "swagger-ui-express": "^5.0.1",
+        "uuid": "^13.0.0",
+        "yamljs": "^0.3.0"
     }
 }

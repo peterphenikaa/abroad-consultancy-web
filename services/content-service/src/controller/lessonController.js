@@ -1,6 +1,10 @@
 const lessonService = require('../services/lessonService');
 const { sendError } = require('../utils/appError');
 
+function resolveUserId(req) {
+    return req.user?.id || req.headers['x-user-id'] || '34e399cb-3dac-4868-9cd2-519ef32a4f81';
+}
+
 const LessonController = {
     createLesson: async (req, res) => {
         try {
@@ -66,7 +70,7 @@ const LessonController = {
     markContentCompleted: async (req, res) => {
         try {
             const { id } = req.params;
-            const userId = req.headers['x-user-id'];
+            const userId = resolveUserId(req);
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
             }

@@ -76,7 +76,10 @@ export default function CoursesPage() {
     }
   };
 
-  const catalogCourses = (catalogData || []).filter((c) => c.status === "PUBLISHED");
+  const enrolledCourseIds = courses.map(c => c.id || c.courseId);
+  const catalogCourses = (catalogData || [])
+    .filter((c) => c.status === "PUBLISHED")
+    .filter((c) => !enrolledCourseIds.includes(c.courseId || c.id));
 
   const displayStats = statsData || {
     coursesEnrolled: 0,
