@@ -41,9 +41,12 @@ export function SignUpPage() {
 
     setIsLoading(true);
     try {
-      await register({ name, email, password });
+      await register({ fullName: name, email, password });
       navigate("/login", {
-        state: { message: "Account created! Please check your email to verify your account." },
+        state: {
+          message:
+            "Account created! Please check your email to verify your account.",
+        },
       });
     } catch (err: any) {
       const detail = err?.response?.data?.error?.detail;
