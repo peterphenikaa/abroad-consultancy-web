@@ -90,6 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        if (path === "/auth/success" || path.startsWith("/oauth/")) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       try {
         const res = await apiClient.post<RefreshTokenResponse>(
           "/auth/refresh",
