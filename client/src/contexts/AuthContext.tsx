@@ -25,36 +25,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-// ─── JWT decode (base64, no library) ──────────────────────────
-function decodeJwtPayload(token: string): JwtPayLoad | null {
-  try {
-    const base64Url = token.split(".")[1];
-
-    if (!base64Url) {
-      return null;
-    }
-
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-
-    const jsonPayLoad = decodeURIComponent(
-      window
-        .atob(base64)
-        .split("")
-        .map(function (c) {
-          return "%" + ("00" + c.charCodeAt(0).toString(16).slice(-2));
-        })
-        .join(""),
-    );
-    return JSON.parse(jsonPayLoad) as JwtPayLoad;
-  } catch (error) {
-    console.error("Failed to decode JWT payload:", error);
-    return null;
-  }
-}
+import { jwtDecode } from "jwt-decode";
 
 function extractUserFromToken(token: string): UserPayload | null {
-  const payload = decodeJwtPayload(token);
+  const payload = jwtDecode<JwtPayLoad>(token);
 
   if (!payload) {
     return null;
@@ -85,6 +59,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+let refreshAttemptedOnce = false;
+
 // ─── Provider ────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -92,6 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (refreshAttemptedOnce) return;
+    refreshAttemptedOnce = true;
+
     // IIFE to run async code in useEffect
     (async () => {
       try {
@@ -165,7 +144,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
       }}
     >
-      {children}
+      {isLoading ? (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="w-8 h-8 border-4 border-accent-amber border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
