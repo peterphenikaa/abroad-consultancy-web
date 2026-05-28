@@ -15,13 +15,14 @@ import {
   LogOut,
   Menu,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   path: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
 }
 
 const publicItems: NavItem[] = [
