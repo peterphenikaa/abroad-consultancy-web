@@ -149,9 +149,7 @@ export default function LandingPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={() =>
-                      window.alert("Hook this up to your university search.")
-                    }
+                    onClick={() => navigate("/search")}
                   >
                     Explore Universities
                   </Button>
