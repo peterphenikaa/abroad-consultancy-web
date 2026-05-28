@@ -5,17 +5,31 @@ let _accessToken: string | null = null;
 
 export const setLocalAccessToken = (token: string | null) => {
   _accessToken = token;
+  if (typeof window !== "undefined") {
+    if (token) {
+      localStorage.setItem("access_token", token);
+    } else {
+      localStorage.removeItem("access_token");
+    }
+  }
 };
 
-export const getLocalAccessToken = () => _accessToken;
+export const getLocalAccessToken = () =>
+  _accessToken ||
+  (typeof window !== "undefined"
+    ? localStorage.getItem("access_token")
+    : null);
 
 export const clearAccessToken = () => {
   _accessToken = null;
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("access_token");
+  }
 };
 
 interface PromiseQueue {
   resolve: (value?: string | null) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 const apiClient = axios.create({
@@ -28,9 +42,9 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (_accessToken && config.headers) {
-      // Cách viết tương thích tốt nhất với các bản Axios mới
-      config.headers["Authorization"] = `Bearer ${_accessToken}`;
+    const token = getLocalAccessToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -40,7 +54,7 @@ apiClient.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue: PromiseQueue[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -70,7 +84,7 @@ apiClient.interceptors.response.use(
         })
           .then((token) => {
             if (token) {
-              originalRequest.headers["Authorization"] = `Bearer ${token}`;
+              originalRequest.headers.Authorization = `Bearer ${token}`;
             }
             return apiClient(originalRequest);
           })
@@ -92,13 +106,12 @@ apiClient.interceptors.response.use(
 
         processQueue(null, newAccessToken);
 
-        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         clearAccessToken();
 
-        // Chuyển hướng an toàn, dọn sạch trạng thái Client
         window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {

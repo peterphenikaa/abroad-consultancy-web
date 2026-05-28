@@ -11,8 +11,8 @@ import Navigation from "./components/Navigation";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 import QuizExecutionPage from "./pages/courses/QuizExecutionPage.jsx";
 import CoursePaymentPage from "./pages/courses/CoursePaymentPage.jsx";
-import { LoginPage } from "./pages/auth/LoginPage.tsx";
-import { SignUpPage } from "./pages/auth/SignUpPage.tsx";
+import { LoginPage } from "./pages/auth/LoginPage";
+import { SignUpPage } from "./pages/auth/SignUpPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { VerifyResetOtpPage } from "./pages/auth/VerifyResetOtpPage";
@@ -36,8 +36,16 @@ export default function AppRoutes() {
 
   const isCourseCheckoutPage =
     location.pathname.startsWith("/courses/") &&
-    location.pathname.endsWith("/payment") &&
-    location.pathname !== "/courses";
+    location.pathname.endsWith("/payment");
+
+  const hideNav =
+    isCourseDetailPage ||
+    isCourseCheckoutPage ||
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    location.pathname.startsWith("/forgot-password") ||
+    location.pathname === "/verify-email" ||
+    location.pathname.startsWith("/oauth/");
 
   return (
     <div className="min-h-screen bg-(--background)">
@@ -129,18 +137,9 @@ export default function AppRoutes() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route
-              path="/forgot-password/verify-otp"
-              element={<VerifyResetOtpPage />}
-            />
-            <Route
-              path="/forgot-password/reset"
-              element={<ResetPasswordPage />}
-            />
-            <Route
-              path="/oauth/google/callback"
-              element={<GoogleCallbackPage />}
-            />
+            <Route path="/forgot-password/verify-otp" element={<VerifyResetOtpPage />} />
+            <Route path="/forgot-password/reset" element={<ResetPasswordPage />} />
+            <Route path="/oauth/google/callback" element={<GoogleCallbackPage />} />
           </Routes>
         </motion.main>
       </AnimatePresence>

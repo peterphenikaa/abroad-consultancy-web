@@ -6,6 +6,7 @@ function createError(message, statusCode = 400) {
 }
 
 function sendError(res, error) {
+    console.error("Content Service Error:", error);
     const status = error.statusCode || 500;
     return res.status(status).json({ error: error.message });
 }

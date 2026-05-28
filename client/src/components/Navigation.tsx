@@ -155,7 +155,7 @@ export default function Navigation() {
                         <p className="text-sm font-semibold text-[var(--foreground)]">
                           {user?.email?.split("@")[0] || "User"}
                         </p>
-                        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
+                        <p className="text-xs text-[var(--muted-foreground)] mt-0.5 truncate">
                           {user?.email}
                         </p>
                       </div>

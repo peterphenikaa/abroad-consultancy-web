@@ -22,6 +22,8 @@ export interface JwtPayload {
 export interface PublicPathRule {
   path: string;
   methods?: string[];
+  exact?: boolean;
+  regex?: string;
 }
 
 export interface AuthMiddlewareOptions {

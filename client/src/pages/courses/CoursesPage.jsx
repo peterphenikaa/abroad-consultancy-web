@@ -13,22 +13,25 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent } from "../../components/ui/card";
 import { openCourseWithPaymentGate, formatMoneyVnd, coursePriceVnd } from "../../lib/courseAccess";
+import { useAuth } from "@/contexts/AuthContext";
 
 const themeColors = "var(--chart-1)";
 
 export default function CoursesPage() {
 
   const navigate = useNavigate();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [openingCourseId, setOpeningCourseId] = useState(null);
 
   const { data: coursesData, isLoading: isLoadingCourses, error: errorCourses } = useQuery({
-    queryKey: ["my-courses"],
+    queryKey: ["my-courses", user?.id],
     queryFn: async () => {
       const res = await axios.get("/api/v1/courses/my-courses");
       return res.data.data;
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -42,24 +45,26 @@ export default function CoursesPage() {
   });
 
   const { data: milestonesData, isLoading: isLoadingMilestones } = useQuery({
-    queryKey: ["my-milestones"],
+    queryKey: ["my-milestones", user?.id],
     queryFn: async () => {
       const res = await axios.get("/api/v1/courses/my-milestones");
       return res.data.data;
     },
+    enabled: !!user?.id,
   });
 
   const { data: statsData, isLoading: isLoadingStats } = useQuery({
-    queryKey: ["my-stats"],
+    queryKey: ["my-stats", user?.id],
     queryFn: async () => {
       const res = await axios.get("/api/v1/courses/my-stats");
       return res.data.data;
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
   const courses = coursesData || [];
-  const isLoading = isLoadingCourses || isLoadingStats || isLoadingMilestones;
+  const isLoading = isAuthLoading || isLoadingCourses || isLoadingStats || isLoadingMilestones;
   const error = errorCourses ? "Failed to load courses. Please try again later." : null;
 
   const handleCourseSelect = (courseId) => {
@@ -76,7 +81,10 @@ export default function CoursesPage() {
     }
   };
 
-  const catalogCourses = (catalogData || []).filter((c) => c.status === "PUBLISHED");
+  const enrolledCourseIds = courses.map(c => c.id || c.courseId);
+  const catalogCourses = (catalogData || [])
+    .filter((c) => c.status === "PUBLISHED")
+    .filter((c) => !enrolledCourseIds.includes(c.courseId || c.id));
 
   const displayStats = statsData || {
     coursesEnrolled: 0,

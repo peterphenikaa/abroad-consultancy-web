@@ -14,6 +14,7 @@ import type {
   ResetPasswordData,
 } from "@/types/auth";
 import apiClient, { setLocalAccessToken } from "./apiClient";
+import { normalizeAccessToken } from "@/utils/jwt";
 
 export const authService = {
   login: async (credential: LoginCredentials): Promise<LoginResponse> => {
@@ -22,8 +23,7 @@ export const authService = {
       credential,
     );
 
-    // if succ -> take the token
-    const token = response.data?.access_token;
+    const token = normalizeAccessToken(response.data?.access_token);
     if (token) {
       setLocalAccessToken(token);
     }

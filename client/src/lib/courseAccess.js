@@ -1,3 +1,6 @@
+import { getLocalAccessToken } from "../services/apiClient";
+import { decodeJwtPayload, normalizeAccessToken } from "../utils/jwt";
+
 const USD_VND_RATE = 25000;
 
 export function coursePriceVnd(priceUsd) {
@@ -11,19 +14,8 @@ export function formatMoneyVnd(amount) {
 }
 
 export function getAccessToken() {
-  return typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-}
-
-function decodeJwtPayload(token) {
-  try {
-    const segment = token.split(".")[1];
-    if (!segment) return null;
-    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
-    const json = atob(normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "="));
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
+  if (typeof window === "undefined") return null;
+  return normalizeAccessToken(getLocalAccessToken());
 }
 
 /** @returns {Promise<{ email?: string, phone?: string } | null>} */
@@ -51,7 +43,6 @@ export async function fetchCurrentUserContact() {
   return { email: payload.email, phone: "" };
 }
 
-/** Headers cho payment API — JWT tùy chọn; gateway dev inject x-user-id nếu thiếu token. */
 export function buildAuthHeaders(extra = {}) {
   const token = getAccessToken();
   return {
@@ -60,8 +51,19 @@ export function buildAuthHeaders(extra = {}) {
   };
 }
 
-/** @returns {Promise<{ hasAccess: boolean, requiresLogin?: boolean, isFree?: boolean, title?: string, price?: number }>} */
 export async function fetchCourseAccess(courseId) {
+  try {
+    const res = await fetch(`/api/v1/courses/${courseId}/access`, {
+      headers: buildAuthHeaders(),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data || json;
+    }
+  } catch (err) {
+    console.warn("Local course access check failed, falling back to payment-service:", err);
+  }
+
   const res = await fetch(`/api/payments/courses/${courseId}/access`, {
     headers: buildAuthHeaders(),
   });

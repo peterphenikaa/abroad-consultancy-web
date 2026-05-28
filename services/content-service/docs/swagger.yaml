@@ -1,0 +1,230 @@
+openapi: 3.0.0
+info:
+  title: Content Service API
+  description: Content Service API documentation for the Cambridge learning platform
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local Server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /courses:
+    get:
+      summary: Get all courses
+      security: []
+      responses:
+        '200':
+          description: A list of courses
+    post:
+      summary: Create a new course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, example: "Khoá học IELTS Foundation" }
+                description: { type: string, example: "Khoá học căn bản" }
+                thumbnailUrl: { type: string }
+                subject: { type: string, example: "English" }
+                curriculum: { type: string, example: "IELTS" }
+                level: { type: string, example: "BEGINNER" }
+                price: { type: number, example: 0 }
+                isFree: { type: boolean, example: true }
+                tags: { type: array, items: { type: string }, example: ["IELTS"] }
+                totalDuration: { type: number, example: 120 }
+                accessDurationDays: { type: number, example: 365 }
+      responses:
+        '201':
+          description: Course created
+
+  /courses/{id}:
+    get:
+      summary: Get course details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course details
+    patch:
+      summary: Update course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                price: { type: number }
+      responses:
+        '200':
+          description: Course updated
+    delete:
+      summary: Delete course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course deleted
+
+  /courses/my-courses:
+    get:
+      summary: Get my courses
+      responses:
+        '200':
+          description: List of user's active courses
+
+  /courses/my-stats:
+    get:
+      summary: Get user stats
+      responses:
+        '200':
+          description: User's course stats
+
+  /courses/my-milestones:
+    get:
+      summary: Get user milestones
+      responses:
+        '200':
+          description: User's milestones
+
+  /courses/{id}/publish:
+    patch:
+      summary: Publish course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course published
+
+  /modules:
+    get:
+      summary: Get modules
+      parameters:
+        - in: query
+          name: courseId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of modules
+    post:
+      summary: Create module
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courseId: { type: string }
+                title: { type: string }
+                description: { type: string }
+                orderIndex: { type: number }
+      responses:
+        '201':
+          description: Module created
+
+  /lessons:
+    get:
+      summary: Get lessons
+      parameters:
+        - in: query
+          name: moduleId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of lessons
+    post:
+      summary: Create lesson
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moduleId: { type: string }
+                title: { type: string }
+                duration: { type: number }
+                orderIndex: { type: number }
+      responses:
+        '201':
+          description: Lesson created
+
+  /contents:
+    get:
+      summary: Get contents
+      parameters:
+        - in: query
+          name: lessonId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of contents
+    post:
+      summary: Create content
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lessonId: { type: string }
+                type: { type: string, example: "VIDEO" }
+                title: { type: string }
+                contentUrl: { type: string }
+                orderIndex: { type: number }
+      responses:
+        '201':
+          description: Content created
+
+  /contents/uploads/presigned:
+    post:
+      summary: Get presigned upload URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName: { type: string, example: "example_video.mp4" }
+                fileType: { type: string, example: "video/mp4" }
+      responses:
+        '200':
+          description: Upload URL returned
+
+  /skill-tags:
+    get:
+      summary: Get all skill tags
+      responses:
+        '200':
+          description: List of skill tags
