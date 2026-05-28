@@ -73,7 +73,7 @@ export interface ForgotPasswordResponse {
   message: string;
 }
 
-export interface VerifyOtpResponse {
+export interface VerifyResetOtpResponse {
   message: string;
   resetToken: string;
 }
