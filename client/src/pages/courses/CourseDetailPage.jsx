@@ -28,6 +28,7 @@ import { Badge } from "../../components/ui/badge";
 import { cn } from "../../components/ui/utils";
 
 import { CourseAccessGate } from "../../hooks/useCourseAccessGuard.jsx";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CourseDetailPage() {
   return (
@@ -41,6 +42,7 @@ function CourseDetailPageInner() {
   const { id: courseId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +68,7 @@ function CourseDetailPageInner() {
       }
     };
     fetchCourse();
-  }, [courseId]);
+  }, [courseId, user?.id]);
 
   function initFirstItem(data) {
     if (!data || !data.modules) return;

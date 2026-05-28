@@ -1,5 +1,5 @@
-import { getLocalAccessToken } from "@/services/apiClient";
-import { decodeJwtPayload, normalizeAccessToken } from "@/utils/jwt";
+import { getLocalAccessToken } from "../services/apiClient";
+import { decodeJwtPayload, normalizeAccessToken } from "../utils/jwt";
 
 const USD_VND_RATE = 25000;
 

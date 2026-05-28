@@ -13,6 +13,7 @@ import type {
   VerifyEmailData,
   VerifyResetOtpData,
 } from "@/types/auth";
+import { clearCourseQueryCache } from "@/lib/queryClient";
 import { decodeJwtPayload, normalizeAccessToken } from "@/utils/jwt";
 import {
   createContext,
@@ -101,10 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setLocalAccessToken(token);
         const sessionUser = await resolveSessionUser(token, res.data?.user);
-        if (sessionUser) setUser(sessionUser);
-        else clearAccessToken();
+        if (sessionUser) {
+          clearCourseQueryCache();
+          setUser(sessionUser);
+        } else clearAccessToken();
       } catch {
         clearAccessToken();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -112,6 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
+    clearAccessToken();
+    clearCourseQueryCache();
     const res = await authService.login(credentials);
     if (res.user?.id) {
       setUser(res.user);
@@ -125,6 +131,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (data: RegisterData) => {
+    try {
+      await authService.logout();
+    } catch {
+      /* no active session */
+    } finally {
+      clearAccessToken();
+      setUser(null);
+      clearCourseQueryCache();
+    }
     const res = await authService.register(data);
     return { message: res.message };
   }, []);
@@ -135,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAccessToken();
       setUser(null);
+      clearCourseQueryCache();
     }
   }, []);
 

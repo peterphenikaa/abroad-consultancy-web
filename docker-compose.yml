@@ -81,6 +81,7 @@ services:
     volumes:
       - ./services/auth-service/keys:/app/keys:cached
       - ./services/shared:/app/node_modules/@cambridge/shared:ro
+      - ./services/content-service/src:/app/src:cached
     ports:
       - "3000:3000"
     depends_on:
