@@ -198,7 +198,7 @@ export default function LandingPage() {
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="relative z-10"
+                  className="relative z-0"
                 >
                   <div className="aspect-[4/5]">
                     <img
