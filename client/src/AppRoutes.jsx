@@ -11,6 +11,8 @@ import Navigation from "./components/Navigation.jsx";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 import QuizExecutionPage from "./pages/courses/QuizExecutionPage.jsx";
 import CoursePaymentPage from "./pages/courses/CoursePaymentPage.jsx";
+import { LoginPage } from "./pages/auth/LoginPage.tsx";
+import { SignUpPage } from "./pages/auth/SignUpPage.tsx";
 
 const pageVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(2px)" },
@@ -29,6 +31,7 @@ export default function AppRoutes() {
   const isCourseCheckoutPage =
     location.pathname.startsWith("/courses/") &&
     location.pathname.endsWith("/payment");
+  location.pathname !== "/courses";
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -50,10 +53,17 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/courses/:courseId/payment" element={<CoursePaymentPage />} />
+            <Route
+              path="/courses/:courseId/payment"
+              element={<CoursePaymentPage />}
+            />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
-            <Route path="/courses/:courseId/quiz/:contentId/take" element={<QuizExecutionPage />} />
-
+            <Route
+              path="/courses/:courseId/quiz/:contentId/take"
+              element={<QuizExecutionPage />}
+            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
           </Routes>
         </motion.main>
       </AnimatePresence>
