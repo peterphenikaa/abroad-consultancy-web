@@ -137,9 +137,18 @@ export default function AppRoutes() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/forgot-password/verify-otp" element={<VerifyResetOtpPage />} />
-            <Route path="/forgot-password/reset" element={<ResetPasswordPage />} />
-            <Route path="/oauth/google/callback" element={<GoogleCallbackPage />} />
+            <Route
+              path="/forgot-password/verify-otp"
+              element={<VerifyResetOtpPage />}
+            />
+            <Route
+              path="/forgot-password/reset"
+              element={<ResetPasswordPage />}
+            />
+            <Route
+              path="/oauth/google/callback"
+              element={<GoogleCallbackPage />}
+            />
           </Routes>
         </motion.main>
       </AnimatePresence>

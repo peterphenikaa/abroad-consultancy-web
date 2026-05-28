@@ -1,35 +1,24 @@
-import { useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import { setLocalAccessToken } from "@/services/apiClient";
 import { normalizeAccessToken } from "@/utils/jwt";
 
 export function GoogleCallbackPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const processed = useRef(false);
-
   useEffect(() => {
-    if (processed.current) return;
-    processed.current = true;
+    const hash = window.location.hash;
 
-    const error = searchParams.get("error");
-    if (error) {
-      navigate("/login", { replace: true });
-      return;
-    }
+    const hashContent = hash.substring(1);
 
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
+    const params = new URLSearchParams(hashContent);
     const token = normalizeAccessToken(params.get("access_token"));
 
     if (token) {
       setLocalAccessToken(token);
-      window.location.hash = "";
-      navigate("/dashboard", { replace: true });
+      window.location.href = "/dashboard";
     } else {
-      navigate("/login", { replace: true });
+      console.log("[GoogleCallback] No token, redirecting to /login");
+      window.location.href = "/login";
     }
-  }, [navigate, searchParams]);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
