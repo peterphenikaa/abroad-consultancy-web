@@ -48,8 +48,8 @@ export default function AppRoutes() {
     location.pathname.startsWith("/oauth/");
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {!hideNav && <Navigation />}
+    <div className="min-h-screen bg-(--background)">
+      {!isCourseDetailPage && !isCourseCheckoutPage && <Navigation />}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={location.pathname}
@@ -61,20 +61,77 @@ export default function AppRoutes() {
         >
           <Routes location={location}>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/advisor" element={<ProtectedRoute><AIAdvisorPage /></ProtectedRoute>} />
-            <Route path="/courses" element={<ProtectedRoute><CoursesPage /></ProtectedRoute>} />
-            <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+            <Route
+              path="/advisor"
+              element={
+                <ProtectedRoute>
+                  <AIAdvisorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/courses"
+              element={
+                <ProtectedRoute>
+                  <CoursesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment"
+              element={
+                <ProtectedRoute>
+                  <PaymentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/courses/:courseId/payment"
-              element={<ProtectedRoute><CoursePaymentPage /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <CoursePaymentPage />
+                </ProtectedRoute>
+              }
             />
-            <Route path="/courses/:id" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
+            <Route
+              path="/courses/:id"
+              element={
+                <ProtectedRoute>
+                  <CourseDetailPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/courses/:courseId/quiz/:contentId/take"
-              element={<ProtectedRoute><QuizExecutionPage /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <QuizExecutionPage />
+                </ProtectedRoute>
+              }
             />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
