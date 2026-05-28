@@ -1,7 +1,3 @@
-// Stores current user, isAuthenticated, isLoading globally
-// On mount: calls POST /api/auth/refresh to restore session from HttpOnly cookie → decodes JWT → sets user
-// Provides login, register, logout, verifyEmail, forgotPassword, verifyResetOtp, resetPassword methods Exports AuthProvider (component) and useAuth (hook)
-
 import apiClient, {
   clearAccessToken,
   setLocalAccessToken,
@@ -9,14 +5,16 @@ import apiClient, {
 import { authService } from "@/services/authService";
 import type {
   ForgotPasswordData,
-  JwtPayLoad,
   LoginCredentials,
+  RefreshTokenResponse,
   RegisterData,
   ResetPasswordData,
   UserPayload,
   VerifyEmailData,
   VerifyResetOtpData,
 } from "@/types/auth";
+import { clearCourseQueryCache } from "@/lib/queryClient";
+import { decodeJwtPayload, normalizeAccessToken } from "@/utils/jwt";
 import {
   createContext,
   useCallback,
@@ -25,24 +23,50 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { jwtDecode } from "jwt-decode";
 
-function extractUserFromToken(token: string): UserPayload | null {
-  const payload = jwtDecode<JwtPayLoad>(token);
-
-  if (!payload) {
-    return null;
-  }
-
+function userFromJwt(token: string): UserPayload | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.sub) return null;
   return {
-    id: payload.sub,
-    email: payload.email,
-    permissions: payload.permissions,
-    role: payload.role,
+    id: String(payload.sub),
+    email: String(payload.email ?? ""),
+    permissions: (payload.permissions as UserPayload["permissions"]) ?? [],
+    role: payload.role as UserPayload["role"],
   };
 }
 
-// ─── Context shape ────────────────────────────────────────────
+async function fetchUserFromApi(): Promise<UserPayload | null> {
+  try {
+    const res = await apiClient.get<{
+      success?: boolean;
+      data?: {
+        id: string;
+        email: string;
+        role: UserPayload["role"];
+      };
+    }>("/auth/users/me");
+    const data = res.data?.data;
+    if (!data?.id) return null;
+    return {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      permissions: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function resolveSessionUser(
+  accessToken: string,
+  userFromResponse?: UserPayload,
+): Promise<UserPayload | null> {
+  if (userFromResponse?.id) return userFromResponse;
+  const fromJwt = userFromJwt(accessToken);
+  if (fromJwt) return fromJwt;
+  return fetchUserFromApi();
+}
 
 interface AuthContextType {
   user: UserPayload | null;
@@ -59,46 +83,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-let refreshAttemptedOnce = false;
-
-// ─── Provider ────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (refreshAttemptedOnce) return;
-    refreshAttemptedOnce = true;
-
-    // IIFE to run async code in useEffect
     (async () => {
       try {
-        const res = await apiClient.post<{ access_token: string }>(
+        const res = await apiClient.post<RefreshTokenResponse>(
           "/auth/refresh",
           {},
           { withCredentials: true },
         );
-        const token = res.data.access_token;
+        const token = normalizeAccessToken(res.data?.access_token);
+        if (!token) {
+          clearAccessToken();
+          return;
+        }
         setLocalAccessToken(token);
-        const decoded = extractUserFromToken(token);
-        if (decoded) setUser(decoded);
-      } catch (error) {
+        const sessionUser = await resolveSessionUser(token, res.data?.user);
+        if (sessionUser) {
+          clearCourseQueryCache();
+          setUser(sessionUser);
+        } else clearAccessToken();
+      } catch {
         clearAccessToken();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  // login
   const login = useCallback(async (credentials: LoginCredentials) => {
+    clearAccessToken();
+    clearCourseQueryCache();
     const res = await authService.login(credentials);
-    setUser(res.user);
+    if (res.user?.id) {
+      setUser(res.user);
+      return;
+    }
+    const token = normalizeAccessToken(res.access_token);
+    if (token) {
+      const sessionUser = await resolveSessionUser(token);
+      if (sessionUser) setUser(sessionUser);
+    }
   }, []);
 
-  // register
   const register = useCallback(async (data: RegisterData) => {
+    try {
+      await authService.logout();
+    } catch {
+      /* no active session */
+    } finally {
+      clearAccessToken();
+      setUser(null);
+      clearCourseQueryCache();
+    }
     const res = await authService.register(data);
     return { message: res.message };
   }, []);
@@ -109,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAccessToken();
       setUser(null);
+      clearCourseQueryCache();
     }
   }, []);
 
@@ -144,18 +186,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
       }}
     >
-      {isLoading ? (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="w-8 h-8 border-4 border-accent-amber border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 }
-
-// ─── Hook ─────────────────────────────────────────────────────
 
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);

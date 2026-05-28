@@ -1,5 +1,6 @@
 const lessonService = require('../services/lessonService');
 const { sendError } = require('../utils/appError');
+const { resolveUserId } = require('../utils/resolveUserId');
 
 const LessonController = {
     createLesson: async (req, res) => {
@@ -66,7 +67,7 @@ const LessonController = {
     markContentCompleted: async (req, res) => {
         try {
             const { id } = req.params;
-            const userId = req.headers['x-user-id'];
+            const userId = resolveUserId(req);
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
             }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setLocalAccessToken } from "@/services/apiClient";
+import { normalizeAccessToken } from "@/utils/jwt";
 
 export function GoogleCallbackPage() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export function GoogleCallbackPage() {
 
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
-    const token = params.get("access_token");
+    const token = normalizeAccessToken(params.get("access_token"));
 
     if (token) {
       setLocalAccessToken(token);

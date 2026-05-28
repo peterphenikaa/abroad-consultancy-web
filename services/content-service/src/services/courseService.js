@@ -108,7 +108,6 @@ const CourseService = {
     },
 
     getCourseById: async (courseId, userId) => {
-        const progressUserId = userId || '00000000-0000-0000-0000-000000000000';
         const course = await prisma.course.findUnique({
             where: { courseId },
             include: {
@@ -122,9 +121,9 @@ const CourseService = {
                                 contentItems: {
                                     orderBy: { orderIndex: 'asc' },
                                     include: {
-                                        progresses: {
-                                            where: { userId: progressUserId, isCompleted: true }
-                                        }
+                                        progresses: userId
+                                            ? { where: { userId, isCompleted: true } }
+                                            : { take: 0 },
                                     }
                                 }
                             },
