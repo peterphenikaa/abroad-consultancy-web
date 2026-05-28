@@ -355,16 +355,15 @@ const CourseService = {
             return base;
         }
 
-        const payment = await prisma.payment.findFirst({
-            where: { userId, courseId, status: 'COMPLETED' },
-            orderBy: { createdAt: 'desc' },
+        const enrollment = await prisma.enrollment.findUnique({
+            where: { userId_courseId: { userId, courseId } },
+            select: { status: true },
         });
-        if (payment) {
-            await CourseService.enrollUser(userId, courseId);
-            return { ...base, hasAccess: true, paid: true, enrolled: true };
+        if (enrollment?.status === 'ACTIVE') {
+            return { ...base, hasAccess: true, enrolled: true };
         }
 
-        // Khóa trả phí: chỉ mở sau thanh toán COMPLETED (enrollment tay/seed không đủ)
+        // Paid access is verified by payment-service (payments table owned there).
         return base;
     },
 };
