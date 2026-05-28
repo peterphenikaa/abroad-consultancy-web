@@ -73,6 +73,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   register: (data: RegisterData) => Promise<{ message: string }>;
   logout: () => Promise<void>;
   verifyEmail: (data: VerifyEmailData) => Promise<void>;
@@ -89,6 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        if (path === "/auth/success" || path.startsWith("/oauth/")) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       try {
         const res = await apiClient.post<RefreshTokenResponse>(
           "/auth/refresh",
@@ -128,6 +137,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sessionUser = await resolveSessionUser(token);
       if (sessionUser) setUser(sessionUser);
     }
+  }, []);
+
+  const loginWithToken = useCallback(async (token: string) => {
+    setLocalAccessToken(token);
+    const sessionUser = await resolveSessionUser(token);
+    if (sessionUser) setUser(sessionUser);
   }, []);
 
   const register = useCallback(async (data: RegisterData) => {
@@ -178,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithToken,
         register,
         logout,
         verifyEmail,

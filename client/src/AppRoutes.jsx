@@ -45,7 +45,8 @@ export default function AppRoutes() {
     location.pathname === "/signup" ||
     location.pathname.startsWith("/forgot-password") ||
     location.pathname === "/verify-email" ||
-    location.pathname.startsWith("/oauth/");
+    location.pathname.startsWith("/oauth/") ||
+    location.pathname === "/auth/success";
 
   return (
     <div className="min-h-screen bg-(--background)">
@@ -137,9 +138,19 @@ export default function AppRoutes() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/forgot-password/verify-otp" element={<VerifyResetOtpPage />} />
-            <Route path="/forgot-password/reset" element={<ResetPasswordPage />} />
-            <Route path="/oauth/google/callback" element={<GoogleCallbackPage />} />
+            <Route
+              path="/forgot-password/verify-otp"
+              element={<VerifyResetOtpPage />}
+            />
+            <Route
+              path="/forgot-password/reset"
+              element={<ResetPasswordPage />}
+            />
+            <Route
+              path="/oauth/google/callback"
+              element={<GoogleCallbackPage />}
+            />
+            <Route path="/auth/success" element={<GoogleCallbackPage />} />
           </Routes>
         </motion.main>
       </AnimatePresence>
