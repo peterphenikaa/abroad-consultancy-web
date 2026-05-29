@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { db, getTrustedTime } from '../services/db';
+import apiClient from '../services/apiClient';
 
 export const useDownloadContent = () => {
     const [loading, setLoading] = useState(false);
@@ -10,12 +11,8 @@ export const useDownloadContent = () => {
         setProgress(10);
 
         try {
-            const response = await fetch(`/api/v1/contents/${contentId}/offline`);
-            if (!response.ok) {
-                throw new Error("API chưa trả về cục offline data");
-            }
-            const resJson = await response.json();
-            const data = resJson.data;
+            const response = await apiClient.get(`/v1/contents/${contentId}/offline`);
+            const data = response.data.data;
 
             setProgress(40);
             const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
@@ -23,7 +20,7 @@ export const useDownloadContent = () => {
 
             await db.courses.put({ ...data.courseData, expiresAt });
             await db.contents.put({ ...data.contentData, expiresAt });
-            
+
             setProgress(60);
 
             const mediaUrls = data.mediaUrls || [];
