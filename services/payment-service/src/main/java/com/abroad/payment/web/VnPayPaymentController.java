@@ -71,6 +71,9 @@ public class VnPayPaymentController {
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             return new RedirectView(base + "?vnpay=error&reason=" + msg);
+        } catch (IllegalStateException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            return new RedirectView(base + "?vnpay=error&reason=" + msg);
         }
     }
 

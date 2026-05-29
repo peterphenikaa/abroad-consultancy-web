@@ -108,6 +108,15 @@ const CourseService = {
     },
 
     getCourseById: async (courseId, userId) => {
+        const access = await CourseService.getCourseAccessStatus(courseId, userId);
+        if (!access.hasAccess) {
+            const status = access.requiresLogin ? 401 : 403;
+            const message = access.requiresLogin
+                ? 'Login required to view this course'
+                : 'You do not have access to this course';
+            throw createError(message, status);
+        }
+
         const course = await prisma.course.findUnique({
             where: { courseId },
             include: {

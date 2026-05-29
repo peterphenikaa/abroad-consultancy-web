@@ -72,7 +72,7 @@ export default function CoursePaymentPage() {
     try {
       const data = await fetchCourseAccess(courseId);
       setAccessInfo(data);
-      if (data.hasAccess) {
+      if (data.hasAccess && !data.requiresLogin) {
         navigate(`/courses/${courseId}`, { replace: true });
       }
     } catch (e) {
@@ -156,6 +156,10 @@ export default function CoursePaymentPage() {
 
   const startCheckout = async () => {
     if (!accessInfo || accessInfo.isFree) {
+      if (accessInfo?.requiresLogin) {
+        navigate("/login", { state: { from: `/courses/${courseId}` } });
+        return;
+      }
       navigate(`/courses/${courseId}`);
       return;
     }
@@ -186,9 +190,7 @@ export default function CoursePaymentPage() {
       if (!res.ok) {
         const msg = data.message || data.error || `HTTP ${res.status}`;
         if (res.status === 401) {
-          throw new Error(
-            "Not authenticated. Set PAYMENT_TEST_USER_ID in .env and restart api-gateway, or send a Bearer token.",
-          );
+          throw new Error("Please log in to make a payment.");
         }
         throw new Error(typeof msg === "string" ? msg : "Could not create payment link");
       }
@@ -327,10 +329,14 @@ export default function CoursePaymentPage() {
                 type="button"
                 variant="gradient"
                 className="flex-[1.4] text-base font-semibold"
-                disabled={loading || checkoutLoading || accessInfo?.isFree}
+                disabled={loading || checkoutLoading || (accessInfo?.isFree && !accessInfo?.requiresLogin)}
                 onClick={startCheckout}
               >
-                {checkoutLoading ? "Redirecting to VNPay…" : "Continue to payment"}
+                {checkoutLoading
+                  ? "Redirecting to VNPay…"
+                  : accessInfo?.isFree && accessInfo?.requiresLogin
+                    ? "Log in to start"
+                    : "Continue to payment"}
                 {!checkoutLoading && <ArrowRight className="h-5 w-5" />}
               </Button>
             </div>

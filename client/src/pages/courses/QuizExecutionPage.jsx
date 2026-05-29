@@ -10,6 +10,7 @@ import AttemptHistory from './components/AttemptHistory';
 import StandardQuizLayout from './components/StandardQuizLayout';
 import ReadingQuizLayout from './components/ReadingQuizLayout';
 import { CourseAccessGate } from '../../hooks/useCourseAccessGuard.jsx';
+import { buildAuthHeaders } from '../../lib/courseAccess';
 
 export default function QuizExecutionPage() {
     return (
@@ -40,10 +41,14 @@ function QuizExecutionPageInner() {
         const fetchData = async () => {
             setStatus('loading');
             try {
-                const courseRes = await axios.get(`/api/v1/courses/${courseId}`);
+                const courseRes = await axios.get(`/api/v1/courses/${courseId}`, {
+                    headers: buildAuthHeaders(),
+                });
                 setCourse(courseRes.data);
 
-                const res = await axios.get(`/api/v1/contents/${contentId}`);
+                const res = await axios.get(`/api/v1/contents/${contentId}`, {
+                    headers: buildAuthHeaders(),
+                });
                 const qData = res.data.data || res.data;
                 const questionsList = qData.metadata?.questions || [];
                 setQuizData(qData);

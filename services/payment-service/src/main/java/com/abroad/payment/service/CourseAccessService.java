@@ -51,7 +51,11 @@ public class CourseAccessService {
             JsonNode data = root.path("data");
             boolean isFree = data.path("isFree").asBoolean(false);
             boolean enrolled = data.path("enrolled").asBoolean(false);
-            boolean hasAccess = data.path("hasAccess").asBoolean(false) || isFree;
+            boolean requiresLogin = data.path("requiresLogin").asBoolean(userId == null || userId.isBlank());
+            boolean hasAccess = isFree || data.path("hasAccess").asBoolean(false);
+            if (!isFree && (userId == null || userId.isBlank())) {
+                hasAccess = false;
+            }
             boolean paidLocally =
                     userId != null
                             && !userId.isBlank()
@@ -72,7 +76,7 @@ public class CourseAccessService {
                     hasAccess,
                     enrolled,
                     paidLocally || data.path("paid").asBoolean(false),
-                    data.path("requiresLogin").asBoolean(userId == null || userId.isBlank()));
+                    requiresLogin);
         } catch (Exception e) {
             throw new IllegalStateException("Không thể kiểm tra quyền truy cập khóa học", e);
         }
