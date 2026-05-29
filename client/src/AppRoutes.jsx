@@ -19,6 +19,7 @@ import { VerifyResetOtpPage } from "./pages/auth/VerifyResetOtpPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { GoogleCallbackPage } from "./pages/auth/GoogleCallbackPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { GuestRoute } from "./components/GuestRoute.tsx";
 
 const pageVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(2px)" },
@@ -50,7 +51,7 @@ export default function AppRoutes() {
 
   return (
     <div className="min-h-screen bg-(--background)">
-      {!isCourseDetailPage && !isCourseCheckoutPage && <Navigation />}
+      {!hideNav && <Navigation />}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={location.pathname}
@@ -61,7 +62,14 @@ export default function AppRoutes() {
           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         >
           <Routes location={location}>
-            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/"
+              element={
+                <GuestRoute>
+                  <LandingPage />
+                </GuestRoute>
+              }
+            />
             <Route
               path="/advisor"
               element={
@@ -94,14 +102,7 @@ export default function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/search"
-              element={
-                <ProtectedRoute>
-                  <SearchPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/search" element={<SearchPage />} />
             <Route
               path="/analytics"
               element={
@@ -134,8 +135,22 @@ export default function AppRoutes() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <LoginPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <GuestRoute>
+                  <SignUpPage />
+                </GuestRoute>
+              }
+            />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route
