@@ -1,0 +1,109 @@
+{
+  "info": {
+    "name": "CAM_EDU Search Service (FastAPI)",
+    "description": "Full-text search: university + visa (crawler DB → OpenSearch).\n\nChạy service trước:\n`cd services/search-service-fastAPI`\n`py -m uvicorn app.main:app --port 3007 --reload`\n\nCần `.env` repo root: CRAWLER_DATABASE_URL, ELASTICSEARCH_NODE.\n\nThứ tự test: Health → Config → **POST Sync** → GET Search.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3007"
+    },
+    {
+      "key": "searchQuery",
+      "value": "university"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Config",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "GET Config Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/config/status",
+            "description": "opensearch_configured + postgres_configured phải true."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Sync (bắt buộc trước Search)",
+      "item": [
+        {
+          "name": "POST Sync Postgres → OpenSearch",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/sync",
+            "description": "Đọc crawler.raw_university_data + raw_visa_data → index study_abroad_data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Search",
+      "item": [
+        {
+          "name": "GET Search (q=university)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search?q={{searchQuery}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{searchQuery}}",
+                  "description": "Từ khóa: university, visa, Australia, tên trường..."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Search (q=visa)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/search?q=visa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Via API Gateway (tuỳ chọn)",
+      "item": [
+        {
+          "name": "GET Search via Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://127.0.0.1:8080/api/search?q={{searchQuery}}",
+            "description": "Gateway phải chạy + SEARCH_SERVICE_URL trỏ search-service:3007."
+          }
+        },
+        {
+          "name": "POST Sync via Gateway",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "http://127.0.0.1:8080/api/sync"
+          }
+        }
+      ]
+    }
+  ]
+}
