@@ -5,6 +5,7 @@ import {
   googleAuthInit,
   ssoErrorHandler,
 } from '../../middleware/sso.middleware';
+import { validateToken } from '../../middleware/validateToken';
 
 const authRouter = Router();
 
@@ -18,6 +19,9 @@ authRouter.post('/verify-email', AuthController.verifyEmail);
 authRouter.post('/forgot-password', AuthController.forgotPassword);
 authRouter.post('/reset-password', AuthController.resetPassword);
 authRouter.post('/reset-password/verify-otp', AuthController.verifyResetOtp);
+
+// --- Change Password ---
+authRouter.put('/change-password', validateToken, AuthController.changePassword);
 
 // --- Google OAuth SSO ---
 authRouter.get('/google', googleAuthInit);

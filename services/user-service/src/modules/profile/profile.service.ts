@@ -3,14 +3,23 @@ import { ApiError } from '../../utils/api-error.util';
 import { UpdateProfileDTO } from './profile.schema';
 
 export class ProfileService {
-  static async getMe(userId: string) {
+  static async getMe(userId: string, email?: string, role?: string) {
     let user = await prisma.user.findUnique({
       where: { id: userId },
       include: { profile: true },
     });
 
     if (!user) {
-      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          email: email ?? 'unknown@unknown.com',
+          role: role ?? 'STUDENT',
+          profile: { create: {} },
+        },
+        include: { profile: true },
+      });
+      return user;
     }
 
     if (!user.profile) {
@@ -28,15 +37,21 @@ export class ProfileService {
     return user;
   }
 
-  static async updateMe(userId: string, data: UpdateProfileDTO) {
+  static async updateMe(userId: string, data: UpdateProfileDTO, email?: string, role?: string) {
     const { fullName, bio, avatarUrl, phone, educationalLevel, learningGoals } = data;
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          email: email ?? 'unknown@unknown.com',
+          role: role ?? 'STUDENT',
+        },
+      });
     }
 
     const updated = await prisma.user.update({

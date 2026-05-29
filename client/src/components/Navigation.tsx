@@ -12,6 +12,7 @@ import {
   LogIn,
   UserPlus,
   User,
+  UserCircle,
   LogOut,
   Menu,
   X,
@@ -159,6 +160,14 @@ export default function Navigation() {
                           {user?.email}
                         </p>
                       </div>
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[var(--accent)] transition-colors"
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        My Profile
+                      </Link>
                       <button
                         onClick={() => {
                           logout();
@@ -250,6 +259,14 @@ export default function Navigation() {
                         {user?.email}
                       </span>
                     </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 w-full rounded-lg hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <UserCircle className="w-5 h-5 text-[var(--muted-foreground)]" />
+                      <span className="font-medium">My Profile</span>
+                    </Link>
                     <button
                       onClick={() => {
                         logout();

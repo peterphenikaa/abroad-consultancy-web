@@ -17,6 +17,7 @@ import { OtpService } from '../otp/otp.service';
 import { SessionService } from '../session/session.service';
 import { STATUS_ERROR } from './auth.constant';
 import {
+  ChangePasswordDTO,
   ForgotPasswordDTO,
   LoginDTO,
   RegisterDTO,
@@ -59,8 +60,12 @@ export class AuthService {
     });
 
     // Sync to user-service (non-blocking)
-    syncToUserService({ id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status as string })
-      .catch((err) => logger.error({ err }, 'Failed to sync user to user-service'));
+    syncToUserService({
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      status: newUser.status as string,
+    }).catch((err) => logger.error({ err }, 'Failed to sync user to user-service'));
 
     // OTP generates
     const otp = OtpGenerator.generateOTP(6);
@@ -466,9 +471,51 @@ export class AuthService {
       },
     };
   }
+
+  static async changePassword(userId: string, payload: ChangePasswordDTO) {
+    // 1. take data
+    const { currentPassword, newPassword } = payload;
+
+    // 2. find user
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
+    }
+
+    // 3. check OAuth?
+    if (!user.passwordHash) {
+      throw new ApiError(400, 'Cannot change password for OAuth user', 'OAUTH_ACCOUNT');
+    }
+    // 4. verify pass
+    const isValid = await verifyPassword(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new ApiError(401, 'Current password is incorrect', 'INVALID_CURRENT_PASSWORD');
+    }
+
+    // 5. hashedPassword
+    const hashedPassword = await hashPassword(newPassword);
+
+    // 6. update in db
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashedPassword },
+    });
+    // return
+    return { message: 'Password changed successfully' };
+  }
 }
 
-async function syncToUserService(data: { id: string; email: string; role: string; status: string }) {
+async function syncToUserService(data: {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+}) {
   const url = `${env.USER_SERVICE_URL}/api/users/internal/sync`;
   const response = await fetch(url, {
     method: 'POST',

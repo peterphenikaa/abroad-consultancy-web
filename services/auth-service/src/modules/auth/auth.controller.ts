@@ -4,6 +4,7 @@ import { logger } from '../../config/logger';
 import { NextFunction, Request, Response } from 'express';
 import { env } from '../../config/env';
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
@@ -14,6 +15,7 @@ import {
 import { AuthService } from './auth.service';
 import { ClientContext } from '../../types/shared.type';
 import { ApiError } from '../../utils/api-error.util';
+import { AuthUser } from '../../types/express';
 
 export class AuthController {
   /**
@@ -291,6 +293,33 @@ export class AuthController {
       }
 
       res.redirect(`${env.FRONTEND_OAUTH_SUCCESS_URL}?error=server_error`);
+    }
+  }
+
+  /**
+   * Change pass
+   */
+  static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // user check
+      const user = req.user;
+      if (!user) {
+        throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED');
+      }
+
+      // req.body check
+      const parseResult = changePasswordSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = z.flattenError(parseResult.error).fieldErrors;
+        throw new ApiError(400, 'Change Password Validation Error', 'VALIDATION_ERROR', errors);
+      }
+
+      // auth service call
+      const result = await AuthService.changePassword(user.id, parseResult.data);
+      res.status(200).json(result);
+      // response
+    } catch (error) {
+      next(error);
     }
   }
 }
