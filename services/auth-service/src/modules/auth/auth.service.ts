@@ -55,11 +55,12 @@ export class AuthService {
         email: email,
         passwordHash: hashedPassword,
         fullName: fullName,
-        userProfile: {
-          create: {},
-        },
       },
     });
+
+    // Sync to user-service (non-blocking)
+    syncToUserService({ id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status as string })
+      .catch((err) => logger.error({ err }, 'Failed to sync user to user-service'));
 
     // OTP generates
     const otp = OtpGenerator.generateOTP(6);
@@ -464,5 +465,18 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+}
+
+async function syncToUserService(data: { id: string; email: string; role: string; status: string }) {
+  const url = `${env.USER_SERVICE_URL}/api/users/internal/sync`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`user-service sync failed (${response.status}): ${body}`);
   }
 }

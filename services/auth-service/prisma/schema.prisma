@@ -53,8 +53,7 @@ model User {
   providerId   String?      @db.VarChar(255) /// ID returned by google
 
   // Relationships
-  sessions    UserSession[]
-  userProfile UserProfile?
+  sessions UserSession[]
 
   @@index([emailVerified])
   @@index([email]) // Tối ưu hóa khi tìm kiếm user lúc đăng nhập
@@ -83,21 +82,4 @@ model UserSession {
   @@map("user_sessions")
 }
 
-model UserProfile {
-  id String @id @default(cuid()) @db.VarChar(25)
 
-  userId String @unique @map("user_id") @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  bio              String? @db.Text
-  avatarUrl        String? @map("avatar_url") @db.VarChar(500)
-  phone            String? @db.VarChar(20)
-  educationalLevel String? @map("educational_level") @db.VarChar(100)
-  learningGoals    String? @map("learning_goals") @db.Text
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@index([createdAt])
-  @@map("user_profiles")
-}
