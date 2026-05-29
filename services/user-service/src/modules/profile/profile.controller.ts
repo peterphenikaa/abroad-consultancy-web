@@ -14,7 +14,7 @@ export class ProfileController {
         throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED');
       }
 
-      const userInfo = await ProfileService.getMe(userId);
+      const userInfo = await ProfileService.getMe(userId, user.email, user.role);
       res.status(200).json({ success: true, data: userInfo });
     } catch (error) {
       next(error);
@@ -40,7 +40,7 @@ export class ProfileController {
         );
       }
 
-      const updatedUser = await ProfileService.updateMe(userId, parseResult.data);
+      const updatedUser = await ProfileService.updateMe(userId, parseResult.data, user.email, user.role);
 
       res.status(200).json({
         message: 'Profile updated successfully',
