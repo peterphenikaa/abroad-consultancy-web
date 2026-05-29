@@ -21,7 +21,7 @@ authRouter.post('/reset-password', AuthController.resetPassword);
 authRouter.post('/reset-password/verify-otp', AuthController.verifyResetOtp);
 
 // --- Change Password ---
-authRouter.post('/change-password', validateToken, AuthController.changePassword);
+authRouter.put('/change-password', validateToken, AuthController.changePassword);
 
 // --- Google OAuth SSO ---
 authRouter.get('/google', googleAuthInit);
