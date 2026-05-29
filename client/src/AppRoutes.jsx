@@ -18,6 +18,7 @@ import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { VerifyResetOtpPage } from "./pages/auth/VerifyResetOtpPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { GoogleCallbackPage } from "./pages/auth/GoogleCallbackPage";
+import { ProfilePage } from "./pages/profile/ProfilePage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { GuestRoute } from "./components/GuestRoute.tsx";
 
@@ -91,6 +92,14 @@ export default function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PaymentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />
