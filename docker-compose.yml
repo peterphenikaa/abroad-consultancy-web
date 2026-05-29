@@ -46,13 +46,33 @@ services:
   # ⚙️ MICROSERVICES
   # ==========================================
 
+  user-db:
+    image: postgres:15-alpine
+    container_name: cambridge_user_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: user_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   user-service:
     build: ./services/user-service
     env_file: .env
     environment:
-      - KAFKA_BROKER=kafka:9092
+      - PORT=3002
+      - DATABASE_URL=postgresql://user:password@user-db:5432/user_db
+      - JWT_PUBLIC_KEY=@/app/keys/jwtRS256.key.pub
+    volumes:
+      - ./services/auth-service/keys:/app/keys:cached
+    ports:
+      - "3002:3002"
     depends_on:
-      - kafka
+      - user-db
     networks:
       - app-network
 
@@ -159,3 +179,4 @@ networks:
 
 volumes:
   minio_data:
+  user_db_data:
