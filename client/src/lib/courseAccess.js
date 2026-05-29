@@ -43,30 +43,34 @@ export async function fetchCurrentUserContact() {
   return { email: payload.email, phone: "" };
 }
 
+/** Headers cho payment API — gửi Bearer token và x-user-id từ JWT sub. */
 export function buildAuthHeaders(extra = {}) {
   const token = getAccessToken();
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  const headers = { ...extra };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+    const payload = decodeJwtPayload(token);
+    if (payload?.sub) {
+      headers["x-user-id"] = payload.sub;
+    }
+  }
+  return headers;
 }
 
 export async function fetchCourseAccess(courseId) {
+  const headers = buildAuthHeaders();
+
   try {
-    const res = await fetch(`/api/v1/courses/${courseId}/access`, {
-      headers: buildAuthHeaders(),
-    });
+    const res = await fetch(`/api/payments/courses/${courseId}/access`, { headers });
     if (res.ok) {
       const json = await res.json();
       return json.data || json;
     }
   } catch (err) {
-    console.warn("Local course access check failed, falling back to payment-service:", err);
+    console.warn("Payment access check failed, falling back to content-service:", err);
   }
 
-  const res = await fetch(`/api/payments/courses/${courseId}/access`, {
-    headers: buildAuthHeaders(),
-  });
+  const res = await fetch(`/api/v1/courses/${courseId}/access`, { headers });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(text || `HTTP ${res.status}`);
@@ -82,7 +86,7 @@ export async function fetchCourseAccess(courseId) {
 export async function openCourseWithPaymentGate(courseId, navigate) {
   try {
     const access = await fetchCourseAccess(courseId);
-    if (access.hasAccess) {
+    if (access.hasAccess && !access.requiresLogin) {
       navigate(`/courses/${courseId}`);
       return "opened";
     }

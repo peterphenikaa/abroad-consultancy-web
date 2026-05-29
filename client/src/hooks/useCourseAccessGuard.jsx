@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchCourseAccess, getAccessToken } from "../lib/courseAccess";
+import { fetchCourseAccess } from "../lib/courseAccess";
 import { ContentSkeleton } from "../pages/courses/components/ContentSkeleton";
 
 /** Chặn truy cập nội dung khóa học nếu chưa thanh toán. */
@@ -18,7 +18,7 @@ export function useCourseAccessGuard() {
       try {
         const access = await fetchCourseAccess(courseId);
         if (cancelled) return;
-        if (access.hasAccess) {
+        if (access.hasAccess && !access.requiresLogin) {
           setAllowed(true);
           return;
         }

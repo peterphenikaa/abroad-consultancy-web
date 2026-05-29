@@ -29,6 +29,7 @@ import { cn } from "../../components/ui/utils";
 
 import { CourseAccessGate } from "../../hooks/useCourseAccessGuard.jsx";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildAuthHeaders } from "../../lib/courseAccess";
 
 export default function CourseDetailPage() {
   return (
@@ -56,7 +57,9 @@ function CourseDetailPageInner() {
     const fetchCourse = async () => {
       setIsLoading(true);
       try {
-        const res = await axios.get(`/api/v1/courses/${courseId}`);
+        const res = await axios.get(`/api/v1/courses/${courseId}`, {
+          headers: buildAuthHeaders(),
+        });
         const data = res.data;
         if (!data.modules) data.modules = [];
         setCourse(data);
