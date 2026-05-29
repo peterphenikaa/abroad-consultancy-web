@@ -41,6 +41,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
   EMAIL_FROM: z.string().default('Cambridge Platform <noreply@cambridge-platform.com>'),
 
+  // User Service (sync)
+  USER_SERVICE_URL: z.string().default('http://user-service:3002'),
+
   // Google OAuth SSO config
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
