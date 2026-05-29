@@ -394,9 +394,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   className="bg-white text-[var(--primary)] hover:bg-white/90 shadow-xl font-semibold"
-                  onClick={() =>
-                    window.alert("Hook this up to your signup flow.")
-                  }
+                  onClick={() => navigate("/signup")}
                 >
                   Get Started Free
                   <ArrowRight className="w-5 h-5" />
@@ -409,9 +407,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   className="bg-white/10 backdrop-blur-sm text-white border-2 border-white/20 hover:bg-white/20"
-                  onClick={() =>
-                    window.alert("Hook this up to your courses page.")
-                  }
+                  onClick={() => navigate("/courses")}
                 >
                   View Courses
                 </Button>
