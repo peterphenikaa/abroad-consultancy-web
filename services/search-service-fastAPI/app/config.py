@@ -3,8 +3,10 @@ from typing import ClassVar
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_SERVICE_ROOT = Path(__file__).resolve().parents[1]
-_REPO_ROOT = Path(__file__).resolve().parents[3]
+_APP_FILE = Path(__file__).resolve()
+_SERVICE_ROOT = _APP_FILE.parents[1]
+# Trong Docker WORKDIR=/app chỉ có app/ — không có parents[3] tới repo root
+_REPO_ROOT = _APP_FILE.parents[3] if len(_APP_FILE.parents) > 3 else _SERVICE_ROOT
 
 
 def _env_file_paths() -> tuple[str, ...]:

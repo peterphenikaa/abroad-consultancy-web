@@ -148,9 +148,17 @@ services:
   # notification-service:
   #   build: ./services/notification-service
   #   env_file: .env
-  # search-service:
-  #   build: ./services/search-service
-  #   env_file: .env
+  search-service:
+    build: ./services/search-service-fastAPI
+    container_name: search-service
+    env_file: .env
+    environment:
+      # Sync cần port 5432 trực tiếp, không dùng pooler ?pgbouncer=true
+      CRAWLER_DATABASE_URL: ${CRAWLER_DIRECT_URL}
+    ports:
+      - "3007:3007"
+    networks:
+      - app-network
   # analytics-service:
   #   build: ./services/analytics-service
   #   env_file: .env
@@ -163,6 +171,7 @@ services:
       context: ./client
     env_file: .env
     environment:
+      # Kong nội bộ :8000; nếu Kong chưa chạy có thể dùng auth trực tiếp (cùng app-network)
       - VITE_API_PROXY_TARGET=http://cambridge-kong:8000
     ports:
       - "81:80"

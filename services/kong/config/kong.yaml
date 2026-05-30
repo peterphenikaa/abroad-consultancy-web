@@ -206,7 +206,7 @@ services:
           claims_to_verify:
             - exp
 
-  # Search Service
+  # Search Service (public read — trang /search không bắt buộc đăng nhập)
   - name: search-service
     host: search-service
     port: 3007
@@ -215,13 +215,6 @@ services:
         paths:
           - /api/search
         strip_path: false
-    plugins:
-      - name: jwt
-        config:
-          key_claim_name: iss
-          anonymous: null
-          claims_to_verify:
-            - exp
 
   # Swagger Docs
   - name: swagger-docs

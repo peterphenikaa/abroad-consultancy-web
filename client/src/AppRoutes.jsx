@@ -5,7 +5,7 @@ import AIAdvisorPage from "./pages/AIAdvisorPage.jsx";
 import CoursesPage from "./pages/courses/CoursesPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
-import SearchPage from "./pages/SearchPage.jsx";
+import SearchPage from "./pages/SearchPage.tsx";
 import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import Navigation from "./components/Navigation";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";

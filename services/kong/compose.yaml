@@ -59,7 +59,7 @@ services:
     image: redis:7-alpine
     container_name: cambridge-kong-redis
     ports:
-      - "6380:6379"
+      - "6381:6379"
     networks:
       - app-network
 
